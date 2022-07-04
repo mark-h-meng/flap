@@ -1,0 +1,187 @@
+2022-07-04 11:01:28.457794: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libnvinfer.so.6'; dlerror: libnvinfer.so.6: cannot open shared object file: No such file or directory
+2022-07-04 11:01:28.457878: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libnvinfer_plugin.so.6'; dlerror: libnvinfer_plugin.so.6: cannot open shared object file: No such file or directory
+2022-07-04 11:01:28.457892: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:30] Cannot dlopen some TensorRT libraries. If you would like to use Nvidia GPU with TensorRT, please make sure the missing libraries mentioned above are installed properly.
+/home/huasong/.local/share/virtualenvs/fl-analysis-is2uTq_u/lib/python3.7/site-packages/tensorboard/compat/tensorflow_stub/dtypes.py:541: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint8 = np.dtype([("qint8", np.int8, 1)])
+/home/huasong/.local/share/virtualenvs/fl-analysis-is2uTq_u/lib/python3.7/site-packages/tensorboard/compat/tensorflow_stub/dtypes.py:542: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_quint8 = np.dtype([("quint8", np.uint8, 1)])
+/home/huasong/.local/share/virtualenvs/fl-analysis-is2uTq_u/lib/python3.7/site-packages/tensorboard/compat/tensorflow_stub/dtypes.py:543: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint16 = np.dtype([("qint16", np.int16, 1)])
+/home/huasong/.local/share/virtualenvs/fl-analysis-is2uTq_u/lib/python3.7/site-packages/tensorboard/compat/tensorflow_stub/dtypes.py:544: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_quint16 = np.dtype([("quint16", np.uint16, 1)])
+/home/huasong/.local/share/virtualenvs/fl-analysis-is2uTq_u/lib/python3.7/site-packages/tensorboard/compat/tensorflow_stub/dtypes.py:545: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint32 = np.dtype([("qint32", np.int32, 1)])
+/home/huasong/.local/share/virtualenvs/fl-analysis-is2uTq_u/lib/python3.7/site-packages/tensorboard/compat/tensorflow_stub/dtypes.py:550: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  np_resource = np.dtype([("resource", np.ubyte, 1)])
+Using TensorFlow backend.
+INFO:root:Config(environment=Environment(num_clients=50, num_selected_clients=10, num_malicious_clients=3, experiment_name='backdoor_tasks', num_selected_malicious_clients=None, malicious_client_indices=None, attack_frequency=0.2, attacker_full_dataset=False, attacker_full_knowledge=False, load_model=None, ignore_malicious_update=False, print_every=1, print_batch_text=False, save_updates=False, save_norms=False, save_weight_distributions=False, save_history=False, save_model_at=[], save_weight_outside_bound=None, print_backdoor_eval=False, seed=0, use_config_dir=False), server=Server(num_rounds=25, num_test_batches=5, federated_dropout=None, aggregator={'name': 'FedAvg'}, global_learning_rate=-1.0, intrinsic_dimension=1000, gaussian_noise=0.0), client=ClientConfig(model_name='dev', benign_training=TrainingConfig(num_epochs=2, batch_size=24, learning_rate=0.001, decay=None, optimizer='Adam', regularization_rate=None), quantization=None, malicious=MaliciousConfig(objective={'name': 'TargetedAttack', 'args': {'num_epochs': 2, 'num_batch': 5, 'poison_samples': 12, 'optimizer': 'Adam', 'learning_rate': 0.01, 'reduce_lr': True}}, evasion={'name': 'NormBoundPGDEvasion', 'args': {'norm_type': 'l_inf', 'scale_factor': 30}}, backdoor={'type': 'tasks', 'tasks': 3, 'target_label': 1, 'source_label': 7, 'aux_samples': -1, 'augment_times': 20}, attack_type=None, estimate_other_updates=False, attack_start=0, attack_stop=10000000, multi_attacker_scale_divide=None), optimized_training=True, gaussian_noise=None, clip=None, model_weight_regularization=None, debug_client_training=False, disable_bn=False), dataset=Dataset(dataset='femnist', data_distribution='nonIID', number_of_samples=-1, augment_data=False, normalize_mnist_data=False), hyperparameters=None)
+2022-07-04 11:01:29.290182: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcuda.so.1
+2022-07-04 11:01:29.319331: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:981] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-07-04 11:01:29.319578: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1555] Found device 0 with properties: 
+pciBusID: 0000:01:00.0 name: NVIDIA GeForce RTX 3060 Ti computeCapability: 8.6
+coreClock: 1.695GHz coreCount: 38 deviceMemorySize: 7.79GiB deviceMemoryBandwidth: 417.29GiB/s
+2022-07-04 11:01:29.319636: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcudart.so.10.1'; dlerror: libcudart.so.10.1: cannot open shared object file: No such file or directory
+2022-07-04 11:01:29.319670: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcublas.so.10'; dlerror: libcublas.so.10: cannot open shared object file: No such file or directory
+2022-07-04 11:01:29.320234: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcufft.so.10
+2022-07-04 11:01:29.320385: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcurand.so.10
+2022-07-04 11:01:29.320422: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcusolver.so.10'; dlerror: libcusolver.so.10: cannot open shared object file: No such file or directory
+2022-07-04 11:01:29.320453: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcusparse.so.10'; dlerror: libcusparse.so.10: cannot open shared object file: No such file or directory
+2022-07-04 11:01:29.320485: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcudnn.so.7'; dlerror: libcudnn.so.7: cannot open shared object file: No such file or directory
+2022-07-04 11:01:29.320491: W tensorflow/core/common_runtime/gpu/gpu_device.cc:1592] Cannot dlopen some GPU libraries. Please make sure the missing libraries mentioned above are installed properly if you would like to use GPU. Follow the guide at https://www.tensorflow.org/install/gpu for how to download and setup the required libraries for your platform.
+Skipping registering GPU devices...
+2022-07-04 11:01:29.320651: I tensorflow/core/platform/cpu_feature_guard.cc:142] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+2022-07-04 11:01:29.342294: I tensorflow/core/platform/profile_utils/cpu_utils.cc:94] CPU Frequency: 2899885000 Hz
+2022-07-04 11:01:29.344668: I tensorflow/compiler/xla/service/service.cc:168] XLA service 0x564e519dc1a0 initialized for platform Host (this does not guarantee that XLA will be used). Devices:
+2022-07-04 11:01:29.344742: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (0): Host, Default Version
+2022-07-04 11:01:29.405921: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:981] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-07-04 11:01:29.406281: I tensorflow/compiler/xla/service/service.cc:168] XLA service 0x564e518efb50 initialized for platform CUDA (this does not guarantee that XLA will be used). Devices:
+2022-07-04 11:01:29.406331: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (0): NVIDIA GeForce RTX 3060 Ti, Compute Capability 8.6
+2022-07-04 11:01:29.406434: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1096] Device interconnect StreamExecutor with strength 1 edge matrix:
+2022-07-04 11:01:29.406441: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1102]      
+/home/huasong/Documents/fl-security/fl-analysis/src/data/emnist.py:85: H5pyDeprecationWarning: dataset.value has been deprecated. Use dataset[()] instead.
+  out.append({ 'pixels': drawers[key]['pixels'].value, 'label': drawers[key]['label'].value})
+DEBUG:root:10 Found 664 of class [7, 1] to poison!
+DEBUG:root:11 Found 680 of class [7, 1] to poison!
+DEBUG:root:28 Found 686 of class [7, 1] to poison!
+INFO:root:Using default global learning rate of n/m
+INFO:root:Starting training...
+Got 2030/10000000 samples for 3 tasks!
+Replacing value tasks
+Replacing value tasks
+Replacing value tasks
+round= 0 	test_accuracy= 0.09166667 	adv_success= 0.00392156862745098 	test_loss= 2.306507
+DEBUG:root:Memory info: 5159780352
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 1 	test_accuracy= 0.9083333 	adv_success= 0.003431372549019608 	test_loss= 0.38311788 	duration= 17.748018741607666
+DEBUG:root:Memory info: 5452283904
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 2 	test_accuracy= 0.925 	adv_success= 0.00392156862745098 	test_loss= 0.34553775 	duration= 16.881914615631104
+DEBUG:root:Memory info: 5507215360
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 3 	test_accuracy= 0.925 	adv_success= 0.00392156862745098 	test_loss= 0.29419744 	duration= 15.675875186920166
+DEBUG:root:Memory info: 5532196864
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 4 	test_accuracy= 0.925 	adv_success= 0.0029411764705882353 	test_loss= 0.26563257 	duration= 16.660893440246582
+DEBUG:root:Memory info: 5558513664
+INFO:root:Client 28: Malicious training
+INFO:src.attack.targeted_attack:Epoch 0: 5
+INFO:src.attack.targeted_attack:Epoch 1: 5
+INFO:root:Client 11: Malicious training
+INFO:src.attack.targeted_attack:Epoch 0: 5
+INFO:src.attack.targeted_attack:Epoch 1: 5
+INFO:root:Client 10: Malicious training
+INFO:src.attack.targeted_attack:Epoch 0: 5
+INFO:src.attack.targeted_attack:Epoch 1: 5
+Adv success: 0.0
+Adv success: 0.0
+Adv success: 0.0
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 5 	test_accuracy= 0.14166668 	adv_success= 0.0 	test_loss= 4.4948163 	duration= 12.804064512252808
+DEBUG:root:Memory info: 5575995392
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 6 	test_accuracy= 0.525 	adv_success= 0.7950980392156862 	test_loss= 1.7303709 	duration= 15.65052843093872
+DEBUG:root:Memory info: 5598429184
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 7 	test_accuracy= 0.8333333 	adv_success= 0.022058823529411766 	test_loss= 0.56212413 	duration= 15.966439008712769
+DEBUG:root:Memory info: 5620981760
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 8 	test_accuracy= 0.925 	adv_success= 0.02107843137254902 	test_loss= 0.3312927 	duration= 15.50309157371521
+DEBUG:root:Memory info: 5631303680
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 9 	test_accuracy= 0.9333333 	adv_success= 0.010294117647058823 	test_loss= 0.30505738 	duration= 15.114064455032349
+DEBUG:root:Memory info: 5656096768
+INFO:root:Client 28: Malicious training
+INFO:src.attack.targeted_attack:Epoch 0: 5
+INFO:src.attack.targeted_attack:Epoch 1: 5
+INFO:root:Client 11: Malicious training
+INFO:src.attack.targeted_attack:Epoch 0: 5
+INFO:src.attack.targeted_attack:Epoch 1: 5
+INFO:root:Client 10: Malicious training
+INFO:src.attack.targeted_attack:Epoch 0: 5
+INFO:src.attack.targeted_attack:Epoch 1: 5
+Adv success: 0.041666666666666664
+Adv success: 0.041666666666666664
+Adv success: 0.041666666666666664
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 10 	test_accuracy= 0.075 	adv_success= 0.0 	test_loss= 674.4764 	duration= 11.23446249961853
+DEBUG:root:Memory info: 5656641536
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 11 	test_accuracy= 0.18333334 	adv_success= 0.7769607843137255 	test_loss= 2.926067 	duration= 16.719593048095703
+DEBUG:root:Memory info: 5638266880
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 12 	test_accuracy= 0.35 	adv_success= 0.0004901960784313725 	test_loss= 1.7179247 	duration= 15.030028104782104
+DEBUG:root:Memory info: 5657186304
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 13 	test_accuracy= 0.74999994 	adv_success= 0.04019607843137255 	test_loss= 0.8780176 	duration= 15.606432676315308
+DEBUG:root:Memory info: 5692710912
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 14 	test_accuracy= 0.85 	adv_success= 0.049509803921568625 	test_loss= 0.64360476 	duration= 14.82534384727478
+DEBUG:root:Memory info: 5680173056
+INFO:root:Client 10: Malicious training
+INFO:src.attack.targeted_attack:Epoch 0: 5
+INFO:src.attack.targeted_attack:Epoch 1: 5
+INFO:root:Client 28: Malicious training
+INFO:src.attack.targeted_attack:Epoch 0: 5
+INFO:src.attack.targeted_attack:Epoch 1: 5
+INFO:root:Client 11: Malicious training
+INFO:src.attack.targeted_attack:Epoch 0: 5
+INFO:src.attack.targeted_attack:Epoch 1: 5
+Adv success: 0.0
+Adv success: 0.0
+Adv success: 0.0
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 15 	test_accuracy= 0.16666667 	adv_success= 0.0 	test_loss= 60.55962 	duration= 12.708322525024414
+DEBUG:root:Memory info: 5702164480
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 16 	test_accuracy= 0.34999996 	adv_success= 0.8799019607843137 	test_loss= 1.9315462 	duration= 14.592897653579712
+DEBUG:root:Memory info: 5705928704
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 17 	test_accuracy= 0.56666666 	adv_success= 0.6666666666666666 	test_loss= 1.233452 	duration= 14.783700704574585
+DEBUG:root:Memory info: 5711532032
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 18 	test_accuracy= 0.6166667 	adv_success= 0.3897058823529412 	test_loss= 1.0433266 	duration= 14.519790172576904
+DEBUG:root:Memory info: 5741928448
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 19 	test_accuracy= 0.69166666 	adv_success= 0.22401960784313726 	test_loss= 0.8764676 	duration= 15.59467077255249
+DEBUG:root:Memory info: 5730598912
+INFO:root:Client 11: Malicious training
+INFO:src.attack.targeted_attack:Epoch 0: 5
+INFO:src.attack.targeted_attack:Epoch 1: 5
+INFO:root:Client 28: Malicious training
+INFO:src.attack.targeted_attack:Epoch 0: 5
+INFO:src.attack.targeted_attack:Epoch 1: 5
+INFO:root:Client 10: Malicious training
+INFO:src.attack.targeted_attack:Epoch 0: 5
+INFO:src.attack.targeted_attack:Epoch 1: 5
+Adv success: 0.5416666666666666
+Adv success: 0.5416666666666666
+Adv success: 0.5416666666666666
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 20 	test_accuracy= 0.60833335 	adv_success= 0.25441176470588234 	test_loss= 1.1182339 	duration= 10.884559631347656
+DEBUG:root:Memory info: 5731700736
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 21 	test_accuracy= 0.78333336 	adv_success= 0.13137254901960785 	test_loss= 0.69310766 	duration= 15.622470617294312
+DEBUG:root:Memory info: 5719388160
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 22 	test_accuracy= 0.8 	adv_success= 0.10980392156862745 	test_loss= 0.6507287 	duration= 14.706950664520264
+DEBUG:root:Memory info: 5753741312
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 23 	test_accuracy= 0.8583333 	adv_success= 0.08431372549019608 	test_loss= 0.54172844 	duration= 16.160029411315918
+DEBUG:root:Memory info: 5759078400
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 24 	test_accuracy= 0.8833333 	adv_success= 0.049019607843137254 	test_loss= 0.44526705 	duration= 16.59980058670044
+DEBUG:root:Memory info: 5762236416
+INFO:root:Client 11: Malicious training
+INFO:src.attack.targeted_attack:Epoch 0: 5
+INFO:src.attack.targeted_attack:Epoch 1: 5
+INFO:root:Client 28: Malicious training
+INFO:src.attack.targeted_attack:Epoch 0: 5
+INFO:src.attack.targeted_attack:Epoch 1: 5
+INFO:root:Client 10: Malicious training
+INFO:src.attack.targeted_attack:Epoch 0: 5
+INFO:src.attack.targeted_attack:Epoch 1: 5
+Adv success: 0.041666666666666664
+Adv success: 0.041666666666666664
+Adv success: 0.041666666666666664
+>>>>>> HERE we simulate the pruning process, the global weight is 8
+round= 25 	test_accuracy= 0.09166667 	adv_success= 1.0 	test_loss= 10.112614 	duration= 11.983801364898682
