@@ -1,0 +1,6 @@
+conda activate huasong
+cd fl-analysis
+pipenv shell
+python -m src.main -c config.yml
+
+python -m src.main -c config.yml &> out.txt     
