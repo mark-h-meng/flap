@@ -300,230 +300,240 @@ class FederatedAveraging:
         return client_dropout_mask, weights_list
 
     ### [MARK] The entry point of FL core
-    def fit(self, pruning=False):
+    def fit(self, pruning=False, log_file=None):
         """Trains the global model."""
+        if log_file:
+            with open(log_file, 'a', newline='\n') as logger:
+                # central_optimizer = Model.create_optimizer(self.config['optimizer'], self.config['learning_rate'],
+                #                                         self.config['decay_steps'], self.config['decay_rate']) # REMOVE THIS
 
-        # central_optimizer = Model.create_optimizer(self.config['optimizer'], self.config['learning_rate'],
-        #                                         self.config['decay_steps'], self.config['decay_rate']) # REMOVE THIS
-
-        accuracies, rounds, adv_success_list = [], [], []
+                accuracies, rounds, adv_success_list = [], [], []
 
 
-        # loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
-        #     from_logits=False)  # Our model has a softmax layer!
-        # self.model.compile(
-        #     loss=loss_object,
-        #     optimizer=tf.keras.optimizers.Adam(0.001),
-        #     metrics=['accuracy']
-        # )
+                # loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
+                #     from_logits=False)  # Our model has a softmax layer!
+                # self.model.compile(
+                #     loss=loss_object,
+                #     optimizer=tf.keras.optimizers.Adam(0.001),
+                #     metrics=['accuracy']
+                # )
 
-        logging.info("Starting training...")
-        test_accuracy, adv_success, test_loss = self.evaluate()
-        print('round=', 0, '\ttest_accuracy=', test_accuracy,
-              '\tadv_success=', adv_success, '\ttest_loss=', test_loss, flush=True)
-
-        import os
-        import psutil
-
-        for round in range(1, self.num_rounds + 1):
-
-            process = psutil.Process(os.getpid())
-            logging.debug("Memory info: " + str(process.memory_info().rss))  # in bytes
-
-            start_time = time.time()
-
-            if self.attack_frequency is None:
-                ### [MARK] num_clients specifies the number of all clients, num_selected_clients concerns the number of active clients during the FL
-                ### [MARK] This step aims to generate a few indexes of active clients
-                selected_clients = np.random.choice(self.num_clients, self.num_selected_clients, replace=False)
-            else:
-                ### [MARK] First of all, generate the indexes of malicious clients and shuffle them
-                indexes = np.array([[i, self.client_objs[i].malicious] for i in range(len(self.client_objs))])
-                np.random.shuffle(indexes)
-
-                assert len(indexes[indexes[:, 1] == True]) > 0, "There are 0 malicious attackers."
-
-                ### [MARK] Insert those malicious clients into all active clients for the current round, depends on attack frequency
-                if round % (1 / self.attack_frequency) == 0:
-                    num_malicious_selected = self.config.environment.num_selected_malicious_clients or self.num_malicious_clients
-                    honest = indexes[indexes[:, 1] == False][:self.num_selected_clients - num_malicious_selected, 0]
-                    malicious = indexes[indexes[:, 1] == True][0:num_malicious_selected][:, 0]
-                    selected_clients = np.concatenate([malicious, honest])
-                else:
-                    honest = indexes[indexes[:, 1] == False][:self.num_selected_clients, 0]
-                    selected_clients = honest
-                    assert len(selected_clients) == self.num_selected_clients, "There must be enough non-malicious clients to select."
-
-            client_dropout_masks, weights_list = self._create_weights_list(selected_clients)
-
-            # If attacker has full knowledge of a round
-            intermediate_benign_client_weights = [] if self.config.environment.attacker_full_knowledge else None
-
-            #################
-            # TRAINING LOOP #
-            #################
-
-            ### [MARK] Here we seperate benign and malicious clients training
-
-            for i in (c for c in selected_clients if not self.client_objs[c].malicious): # Benign
-                # logging.debug(f"Client {i}: Train")
-                self.client_objs[i].set_weights(weights_list[i])
-                # logging.debug(f"Client {i}: Set weights")
-                self.client_objs[i].set_model(self.model)
-                # logging.debug(f"Client {i}: Set model")
-                self.client_objs[i].train(round)
-                # logging.debug(f"Client {i}: Train")
-                self.client_objs[i].set_model(None)
-                if self.config.environment.attacker_full_knowledge:
-                    intermediate_benign_client_weights.append(
-                        FederatedAveraging.compute_updates(self.client_objs[i].weights, weights_list[i])
-                    )
-
-            single_malicious_update = None
-            for i in (c for c in selected_clients if self.client_objs[c].malicious): # Malicious
-                if self.config.client.malicious.multi_attacker_scale_divide and single_malicious_update is not None:
-                    self.client_objs[i].set_weights(single_malicious_update)
-                else:
-                    self.client_objs[i].set_weights(weights_list[i])
-                    self.client_objs[i].set_model(self.model)
-                    self.client_objs[i].set_benign_updates_this_round(intermediate_benign_client_weights)
-                    self.client_objs[i].train(round)
-                    self.client_objs[i].set_model(None)
-                    if self.config.client.malicious.multi_attacker_scale_divide:
-                        print("Setting multi attacker")
-                        single_malicious_update = self.client_objs[i].weights
-
-            if self.config.environment.save_updates:
-                for i in selected_clients:
-                    self.save_client_updates(self.client_objs[i].id, self.client_objs[i].malicious, round,
-                                             self.client_objs[i].weights, weights_list[i])
-
-            num_adversaries = np.count_nonzero([self.malicious_clients[i] for i in selected_clients])
-            selected_clients_list = [self.client_objs[i] for i in selected_clients]
-
-            ### [MARK] DO PRUNING (ON EACH ACTIVE CLIENT) HERE IF WE WANT IT TO BE DONE PRIOR TO THE AGGREGATION
-
-            ### [MARK] Aggregate
-            if client_dropout_masks is not None:
-                # Federated Dropout
-                weights = aggregate_weights_masked(self.global_weights, self.config.server.global_learning_rate, self.num_clients, self.federated_dropout.rate, client_dropout_masks, [client.weights for client in selected_clients_list])
-                # weights = self.aggregate_weights([client.weights for client in selected_clients_list])
-
-            elif self.config.environment.ignore_malicious_update:
-                # Ignore malicious updates
-                temp_weights = [client.weights for client in selected_clients_list if not client.malicious]
-                weights = self.aggregator.aggregate(self.global_weights, temp_weights)
-            else:
-                # weights = selected_clients_list[0].weights  # just take one, malicious
-
-                temp_weights = [client.weights for client in selected_clients_list]
-
-                if self.config.client.clip is not None and self.config.client.clip.type == "median_l2":  # Apply dynamic norm bound
-                    temp_weights = self.apply_dynamic_clipping(temp_weights)
-
-                weights = self.aggregator.aggregate(self.global_weights, temp_weights)
-
-            ### [MARK] DO PRUNING (ON EACH ACTIVE CLIENT) HERE IF WE WANT IT TO BE DONE PRIOR TO THE AGGREGATION
-            
-            if pruning == 1:
-            
-                print(">>>>>> HERE we simulate the pruning process, the global weight is in ", type(weights), "type and in ", len(weights), "size.")
-                original_model_path = 'paoding/model/cnn'
-                pruned_model_path = 'paoding/model/cnn_pruned'
-
-                self.model.set_weights(weights)
-                self.model.save(original_model_path)
-
-                from paoding.pruner import Pruner
-                from paoding.sampler import Sampler
-                from paoding.evaluator import Evaluator
-                from paoding.utility.option import ModelType, SamplingMode
-                sampler = Sampler()
-                sampler.set_strategy(mode=SamplingMode.STOCHASTIC, params=(0.75, 0.25))   
-                evaluator = None
-                pruner = Pruner(original_model_path, 
-                                ([], []), 
-                                target=0.025,
-                                step=0.025,
-                                sample_strategy=sampler, 
-                                model_type=ModelType.MNIST,
-                                seed_val=42)
-
-                pruner.load_model()
-                pruner.prune(evaluator=evaluator)
-                pruner.save_model(pruned_model_path)
-                
-                from tensorflow import keras
-                self.model = keras.models.load_model(pruned_model_path)
-                weights = self.model.get_weights()
-                
-            ### [MARK] Gaussian noise added after aggregation
-            if self.config.server.gaussian_noise > 0.0:
-                logging.debug(f"Adding noise to aggregated model {self.config.server.gaussian_noise}")
-                total_norm = tf.norm(tf.concat([tf.reshape(weights[i], [-1])
-                                                for i in range(len(weights))], axis=0))
-                print(f"Global weight norm: {total_norm}")
-                for i, layer in enumerate(weights):
-                    noise = self.noise_with_layer(layer)
-                    any_noise_nan = np.isnan(noise).any()
-                    any_layer_nan = np.isnan(layer).any()
-                    import sys
-                    if any_noise_nan:
-                        print("Noise is NaN!")
-                        np.set_printoptions(threshold=sys.maxsize)
-                        print(noise)
-                    if any_layer_nan:
-                        print(f"Layer {i} is NaN1")
-                        np.set_printoptions(threshold=sys.maxsize)
-                        print(self.global_weights[i])
-                        # print(temp_weights[i])
-                        print(layer)
-
-                    sum = layer + noise
-                    if np.isnan(sum).any():
-                        print("Sum is NaN!")
-                        np.set_printoptions(threshold=sys.maxsize)
-                        print(sum)
-
-                    weights[i] = sum
-                # weights = [layer + self.noise_with_layer(layer) for layer in weights]
-
-            if self.keep_history:
-                self.parameters_history.append(deepcopy(weights))
-
-            if round % self.print_every == 0:
-                self.model.set_weights(weights)
-
-                if Model.model_supports_weight_analysis(self.model_name):
-                    self.writer.analyze_weights(self.model, self.global_weights, selected_clients_list, round, self.parameters_history,
-                                                self.config.environment.save_norms, self.config.environment.save_weight_distributions,
-                                                self.config.environment.save_weight_outside_bound)
-
-                self.global_weights = weights
-
+                logging.info("Starting training...")
                 test_accuracy, adv_success, test_loss = self.evaluate()
-                duration = time.time() - start_time
-                self.writer.add_test_metric(test_accuracy, adv_success, round)
-                self.writer.add_honest_train_loss(selected_clients_list, round)
-                self.writer.add_adversary_count(num_adversaries, round)
+                print('round=', 0, '\ttest_accuracy=', test_accuracy,
+                    '\tadv_success=', adv_success, '\ttest_loss=', test_loss, flush=True)
+                
+                output_list = ['round=', 0, '\ttest_accuracy=', test_accuracy,
+                    '\tadv_success=', adv_success, '\ttest_loss=', test_loss, '\n']
+                logger.write(' '.join(map(str, output_list)))
 
-                accuracies.append(test_accuracy)
-                adv_success_list.append(adv_success)
-                rounds.append(round)
-                print('round=', round, '\ttest_accuracy=', test_accuracy, '\tadv_success=', adv_success,
-                      '\ttest_loss=', test_loss, '\tduration=', duration, flush=True)
-            else:
-                self.model.set_weights(weights)
-                self.global_weights = weights
+                import os
+                import psutil
 
-            if round in self.config.environment.save_model_at:
-                self.save_model(round)
+                for round in range(1, self.num_rounds + 1):
 
-            for client in self.client_objs:
-                client.weights = None # Release
+                    process = psutil.Process(os.getpid())
+                    logging.debug("Memory info: " + str(process.memory_info().rss))  # in bytes
 
-        log_data(self.experiment_dir, rounds, accuracies, adv_success_list)
-        self.log_hparams(rounds, accuracies, adv_success_list)
+                    start_time = time.time()
+
+                    if self.attack_frequency is None:
+                        ### [MARK] num_clients specifies the number of all clients, num_selected_clients concerns the number of active clients during the FL
+                        ### [MARK] This step aims to generate a few indexes of active clients
+                        selected_clients = np.random.choice(self.num_clients, self.num_selected_clients, replace=False)
+                    else:
+                        ### [MARK] First of all, generate the indexes of malicious clients and shuffle them
+                        indexes = np.array([[i, self.client_objs[i].malicious] for i in range(len(self.client_objs))])
+                        np.random.shuffle(indexes)
+
+                        assert len(indexes[indexes[:, 1] == True]) > 0, "There are 0 malicious attackers."
+
+                        ### [MARK] Insert those malicious clients into all active clients for the current round, depends on attack frequency
+                        if round % (1 / self.attack_frequency) == 0:
+                            num_malicious_selected = self.config.environment.num_selected_malicious_clients or self.num_malicious_clients
+                            honest = indexes[indexes[:, 1] == False][:self.num_selected_clients - num_malicious_selected, 0]
+                            malicious = indexes[indexes[:, 1] == True][0:num_malicious_selected][:, 0]
+                            selected_clients = np.concatenate([malicious, honest])
+                        else:
+                            honest = indexes[indexes[:, 1] == False][:self.num_selected_clients, 0]
+                            selected_clients = honest
+                            assert len(selected_clients) == self.num_selected_clients, "There must be enough non-malicious clients to select."
+
+                    client_dropout_masks, weights_list = self._create_weights_list(selected_clients)
+
+                    # If attacker has full knowledge of a round
+                    intermediate_benign_client_weights = [] if self.config.environment.attacker_full_knowledge else None
+
+                    #################
+                    # TRAINING LOOP #
+                    #################
+
+                    ### [MARK] Here we seperate benign and malicious clients training
+
+                    for i in (c for c in selected_clients if not self.client_objs[c].malicious): # Benign
+                        # logging.debug(f"Client {i}: Train")
+                        self.client_objs[i].set_weights(weights_list[i])
+                        # logging.debug(f"Client {i}: Set weights")
+                        self.client_objs[i].set_model(self.model)
+                        # logging.debug(f"Client {i}: Set model")
+                        self.client_objs[i].train(round)
+                        # logging.debug(f"Client {i}: Train")
+                        self.client_objs[i].set_model(None)
+                        if self.config.environment.attacker_full_knowledge:
+                            intermediate_benign_client_weights.append(
+                                FederatedAveraging.compute_updates(self.client_objs[i].weights, weights_list[i])
+                            )
+
+                    single_malicious_update = None
+                    for i in (c for c in selected_clients if self.client_objs[c].malicious): # Malicious
+                        if self.config.client.malicious.multi_attacker_scale_divide and single_malicious_update is not None:
+                            self.client_objs[i].set_weights(single_malicious_update)
+                        else:
+                            self.client_objs[i].set_weights(weights_list[i])
+                            self.client_objs[i].set_model(self.model)
+                            self.client_objs[i].set_benign_updates_this_round(intermediate_benign_client_weights)
+                            self.client_objs[i].train(round)
+                            self.client_objs[i].set_model(None)
+                            if self.config.client.malicious.multi_attacker_scale_divide:
+                                print("Setting multi attacker")
+                                single_malicious_update = self.client_objs[i].weights
+
+                    if self.config.environment.save_updates:
+                        for i in selected_clients:
+                            self.save_client_updates(self.client_objs[i].id, self.client_objs[i].malicious, round,
+                                                    self.client_objs[i].weights, weights_list[i])
+
+                    num_adversaries = np.count_nonzero([self.malicious_clients[i] for i in selected_clients])
+                    selected_clients_list = [self.client_objs[i] for i in selected_clients]
+
+                    ### [MARK] DO PRUNING (ON EACH ACTIVE CLIENT) HERE IF WE WANT IT TO BE DONE PRIOR TO THE AGGREGATION
+
+                    ### [MARK] Aggregate
+                    if client_dropout_masks is not None:
+                        # Federated Dropout
+                        weights = aggregate_weights_masked(self.global_weights, self.config.server.global_learning_rate, self.num_clients, self.federated_dropout.rate, client_dropout_masks, [client.weights for client in selected_clients_list])
+                        # weights = self.aggregate_weights([client.weights for client in selected_clients_list])
+
+                    elif self.config.environment.ignore_malicious_update:
+                        # Ignore malicious updates
+                        temp_weights = [client.weights for client in selected_clients_list if not client.malicious]
+                        weights = self.aggregator.aggregate(self.global_weights, temp_weights)
+                    else:
+                        # weights = selected_clients_list[0].weights  # just take one, malicious
+
+                        temp_weights = [client.weights for client in selected_clients_list]
+
+                        if self.config.client.clip is not None and self.config.client.clip.type == "median_l2":  # Apply dynamic norm bound
+                            temp_weights = self.apply_dynamic_clipping(temp_weights)
+
+                        weights = self.aggregator.aggregate(self.global_weights, temp_weights)
+
+                    ### [MARK] DO PRUNING (ON EACH ACTIVE CLIENT) HERE IF WE WANT IT TO BE DONE PRIOR TO THE AGGREGATION
+                    
+                    if pruning == 1:
+                    
+                        print(">>>>>> HERE we simulate the pruning process, the global weight is in ", type(weights), "type and in ", len(weights), "size.")
+                        original_model_path = 'paoding/models/cnn'
+                        pruned_model_path = 'paoding/models/cnn_pruned'
+
+                        self.model.set_weights(weights)
+                        self.model.save(original_model_path)
+
+                        from paoding.pruner import Pruner
+                        from paoding.sampler import Sampler
+                        from paoding.evaluator import Evaluator
+                        from paoding.utility.option import ModelType, SamplingMode
+                        sampler = Sampler()
+                        sampler.set_strategy(mode=SamplingMode.STOCHASTIC, params=(0.75, 0.25))   
+                        evaluator = None
+                        pruner = Pruner(original_model_path, 
+                                        ([], []), 
+                                        target=0.025,
+                                        step=0.025,
+                                        sample_strategy=sampler, 
+                                        model_type=ModelType.MNIST,
+                                        seed_val=42)
+
+                        pruner.load_model()
+                        pruner.prune(evaluator=evaluator)
+                        pruner.save_model(pruned_model_path)
+                        
+                        from tensorflow import keras
+                        self.model = keras.models.load_model(pruned_model_path)
+                        weights = self.model.get_weights()
+                        
+                    ### [MARK] Gaussian noise added after aggregation
+                    if self.config.server.gaussian_noise > 0.0:
+                        logging.debug(f"Adding noise to aggregated model {self.config.server.gaussian_noise}")
+                        total_norm = tf.norm(tf.concat([tf.reshape(weights[i], [-1])
+                                                        for i in range(len(weights))], axis=0))
+                        print(f"Global weight norm: {total_norm}")
+                        for i, layer in enumerate(weights):
+                            noise = self.noise_with_layer(layer)
+                            any_noise_nan = np.isnan(noise).any()
+                            any_layer_nan = np.isnan(layer).any()
+                            import sys
+                            if any_noise_nan:
+                                print("Noise is NaN!")
+                                np.set_printoptions(threshold=sys.maxsize)
+                                print(noise)
+                            if any_layer_nan:
+                                print(f"Layer {i} is NaN1")
+                                np.set_printoptions(threshold=sys.maxsize)
+                                print(self.global_weights[i])
+                                # print(temp_weights[i])
+                                print(layer)
+
+                            sum = layer + noise
+                            if np.isnan(sum).any():
+                                print("Sum is NaN!")
+                                np.set_printoptions(threshold=sys.maxsize)
+                                print(sum)
+
+                            weights[i] = sum
+                        # weights = [layer + self.noise_with_layer(layer) for layer in weights]
+
+                    if self.keep_history:
+                        self.parameters_history.append(deepcopy(weights))
+
+                    if round % self.print_every == 0:
+                        self.model.set_weights(weights)
+
+                        if Model.model_supports_weight_analysis(self.model_name):
+                            self.writer.analyze_weights(self.model, self.global_weights, selected_clients_list, round, self.parameters_history,
+                                                        self.config.environment.save_norms, self.config.environment.save_weight_distributions,
+                                                        self.config.environment.save_weight_outside_bound)
+
+                        self.global_weights = weights
+
+                        test_accuracy, adv_success, test_loss = self.evaluate()
+                        duration = time.time() - start_time
+                        self.writer.add_test_metric(test_accuracy, adv_success, round)
+                        self.writer.add_honest_train_loss(selected_clients_list, round)
+                        self.writer.add_adversary_count(num_adversaries, round)
+
+                        accuracies.append(test_accuracy)
+                        adv_success_list.append(adv_success)
+                        rounds.append(round)
+                        print('round=', round, '\ttest_accuracy=', test_accuracy, '\tadv_success=', adv_success,
+                            '\ttest_loss=', test_loss, '\tduration=', duration, flush=True)
+                         
+                        output_list = ['round=', round, '\ttest_accuracy=', test_accuracy, '\tadv_success=', adv_success,
+                            '\ttest_loss=', test_loss, '\tduration=', duration, '\n']
+                        logger.write(' '.join(map(str, output_list)))
+
+                    else:
+                        self.model.set_weights(weights)
+                        self.global_weights = weights
+
+                    if round in self.config.environment.save_model_at:
+                        self.save_model(round)
+
+                    for client in self.client_objs:
+                        client.weights = None # Release
+
+                log_data(self.experiment_dir, rounds, accuracies, adv_success_list)
+                self.log_hparams(rounds, accuracies, adv_success_list)
 
     def noise_with_layer(self, w):
         sigma = self.config.server.gaussian_noise

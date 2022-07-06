@@ -1,5 +1,7 @@
+from sqlite3 import Timestamp
 import tensorflow as tf
 import numpy as np
+import time 
 
 from src.client_attacks import Attack
 from src.config_cli import get_config
@@ -28,6 +30,16 @@ def save_model(model):
 
 def main():
     models = [load_model()]
+    local_time = time.localtime()
+    timestamp = time.strftime('%b-%d-%H%M', local_time)
+    
+    log_filename = "logs/" + config.client.model_name + "-" + timestamp 
+    if config.environment.paoding:
+        log_filename += "-paoding" 
+    log_filename += ".txt"
+
+    with open(log_filename, "a") as myfile:
+        myfile.write(str(config) + "\n")
 
     if config.client.malicious is not None:
         config.client.malicious.attack_type = Attack.UNTARGETED.value \
@@ -35,8 +47,13 @@ def main():
 
     server_model = FederatedAveraging(config, models, args.config_filepath)
     server_model.init()
-    server_model.fit(pruning=config.environment.paoding)
 
+    start_time = time.time()
+    server_model.fit(pruning=config.environment.paoding, log_file=log_filename)
+    end_time = time.time()
+
+    with open(log_filename, "a") as myfile:
+        myfile.write("Elapsed time: " + str(end_time - start_time))
     return
 
     # if args.hyperparameter_tuning.lower() == "true":
