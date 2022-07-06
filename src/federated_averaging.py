@@ -25,7 +25,6 @@ from src.data.tf_data import Dataset, ImageGeneratorDataset, GeneratorDataset, P
 from src.tf_model import Model
 from src.data.tf_data_global import IIDGlobalDataset, NonIIDGlobalDataset, DirichletDistributionDivider
 
-
 class FederatedAveraging:
     """Implementation of federated averaging algorithm."""
     client_objs: List[Client]
@@ -301,7 +300,7 @@ class FederatedAveraging:
         return client_dropout_mask, weights_list
 
     ### [MARK] The entry point of FL core
-    def fit(self):
+    def fit(self, pruning=False):
         """Trains the global model."""
 
         # central_optimizer = Model.create_optimizer(self.config['optimizer'], self.config['learning_rate'],
@@ -426,39 +425,38 @@ class FederatedAveraging:
 
             ### [MARK] DO PRUNING (ON EACH ACTIVE CLIENT) HERE IF WE WANT IT TO BE DONE PRIOR TO THE AGGREGATION
             
-            print(">>>>>> HERE we simulate the pruning process, the global weight is in ", type(weights), "type and in ", len(weights), "size.")
-
-            print(weights)
-            original_model_path = 'paoding/model/cnn'
-            pruned_model_path = 'paoding/model/cnn_pruned'
-
-            self.model.set_weights(weights)
-            self.model.save(original_model_path)
-
-            from paoding.pruner import Pruner
-            from paoding.sampler import Sampler
-            from paoding.evaluator import Evaluator
-            from paoding.utility.option import ModelType, SamplingMode
-            sampler = Sampler()
-            sampler.set_strategy(mode=SamplingMode.STOCHASTIC, params=(0.75, 0.25))   
-            evaluator = None
-            pruner = Pruner(original_model_path, 
-                            ([], []), 
-                            target=0.025,
-                            step=0.025,
-                            sample_strategy=sampler, 
-                            model_type=ModelType.MNIST,
-                            seed_val=42)
-
-            pruner.load_model()
-            pruner.prune(evaluator=evaluator)
-            pruner.save_model(pruned_model_path)
+            if pruning == 1:
             
-            from tensorflow import keras
-            self.model = keras.models.load_model(pruned_model_path)
-            weights = self.model.get_weights()
-            print(weights)
+                print(">>>>>> HERE we simulate the pruning process, the global weight is in ", type(weights), "type and in ", len(weights), "size.")
+                original_model_path = 'paoding/model/cnn'
+                pruned_model_path = 'paoding/model/cnn_pruned'
 
+                self.model.set_weights(weights)
+                self.model.save(original_model_path)
+
+                from paoding.pruner import Pruner
+                from paoding.sampler import Sampler
+                from paoding.evaluator import Evaluator
+                from paoding.utility.option import ModelType, SamplingMode
+                sampler = Sampler()
+                sampler.set_strategy(mode=SamplingMode.STOCHASTIC, params=(0.75, 0.25))   
+                evaluator = None
+                pruner = Pruner(original_model_path, 
+                                ([], []), 
+                                target=0.025,
+                                step=0.025,
+                                sample_strategy=sampler, 
+                                model_type=ModelType.MNIST,
+                                seed_val=42)
+
+                pruner.load_model()
+                pruner.prune(evaluator=evaluator)
+                pruner.save_model(pruned_model_path)
+                
+                from tensorflow import keras
+                self.model = keras.models.load_model(pruned_model_path)
+                weights = self.model.get_weights()
+                
             ### [MARK] Gaussian noise added after aggregation
             if self.config.server.gaussian_noise > 0.0:
                 logging.debug(f"Adding noise to aggregated model {self.config.server.gaussian_noise}")

@@ -2,7 +2,8 @@
 from dataclasses import dataclass, MISSING, field
 from typing import Optional, Dict, Any, List
 
-from mashumaro import DataClassYAMLMixin
+#from mashumaro import DataClassYAMLMixin
+from mashumaro.mixins.yaml import DataClassYAMLMixin
 
 """
 This class defines the configuration schema of the framework.
@@ -100,6 +101,8 @@ class Environment(DataClassYAMLMixin):
     """Whether to create a separate experiments output directory. 
     If `False` (default), the directory of the config YAML file is used as output directory."""
 
+    paoding: int = 0 # randomness seed
+    """Using paoding to prune the aggregated model"""
 @dataclass
 class Dataset(DataClassYAMLMixin):
     """Defines the dataset to use."""

@@ -35,7 +35,7 @@ def main():
 
     server_model = FederatedAveraging(config, models, args.config_filepath)
     server_model.init()
-    server_model.fit()
+    server_model.fit(pruning=config.environment.paoding)
 
     return
 

@@ -3,6 +3,7 @@ paoding/models/*
 paoding/logs/*
 paoding/input
 paoding/save_figs
+logs/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

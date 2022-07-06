@@ -1,7 +1,8 @@
 from collections import defaultdict
 
 import numpy as np
-from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
+#from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import tensorflow as tf
 
 from src.data import image_augmentation

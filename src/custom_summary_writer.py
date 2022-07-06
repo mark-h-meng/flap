@@ -84,7 +84,6 @@ class CustomSummaryWriter:
                     continue
 
                 suffix = f'norm_{label}_client_updates/l{layer}_{layer_names[i]}'
-                print("XXXX", suffix)
                 # l2, l1 norm
                 self.writer.add_scalar(f'l2_{suffix}', norm(update, axis=-1).mean(), step)
                 self.writer.add_scalar(f'l1_{suffix}', norm(update, ord=1, axis=-1).mean(), step)

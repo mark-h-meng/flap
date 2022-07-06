@@ -1,13 +1,15 @@
 environment:
+  seed: 42
   num_clients: 3383
   num_selected_clients: 30
   num_malicious_clients: 9
   experiment_name: "backdoor_tasks"
-  attack_frequency: 0.5
+  attack_frequency: 0.2
   # attack freq 0.2 means attacking for every 1/0.2=5 rounds
+  paoding: 1
 
 server:
-  num_rounds: 2
+  num_rounds: 10
   num_test_batches: 5
   aggregator:
     name: FedAvg

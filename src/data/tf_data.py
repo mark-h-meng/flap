@@ -3,7 +3,8 @@ import math
 
 import numpy as np
 import tensorflow as tf
-from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
+#from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 from src.data import image_augmentation
 from src.data import emnist
