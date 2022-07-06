@@ -449,7 +449,7 @@ class FederatedAveraging:
                         pruner = Pruner(original_model_path, 
                                         ([], []), 
                                         target=0.025,
-                                        step=0.025,
+                                        step=0.005,
                                         sample_strategy=sampler, 
                                         model_type=ModelType.MNIST,
                                         seed_val=42)
