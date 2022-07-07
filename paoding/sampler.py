@@ -120,6 +120,13 @@ class Sampler:
                             print(round(pruning_pairs_dict_overall_scores[layer][pair], 3), end=' ')
                         print()
                         print(" >> Updated target scores at this layer:", round(target_scores[layer], 3))
+        
+        elif self.mode == SamplingMode.SCALE_ONLY:
+            result = pruning.pruning_scale_only_sparse(model, prune_percentage)
+            (model) = result
+
+            print(" >> Pruning at this layer accomplished.")
+        
         else:
             print("Mode not recognized, execution aborted!")
         

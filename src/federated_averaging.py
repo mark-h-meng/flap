@@ -430,8 +430,12 @@ class FederatedAveraging:
 
                     ### [MARK] DO PRUNING (ON EACH ACTIVE CLIENT) HERE IF WE WANT IT TO BE DONE PRIOR TO THE AGGREGATION
                     
-                    if pruning == 1:
+                    if pruning == 1 and round % 1 == 0:
                     
+                        pruning_params = (0.75, 0.25)
+                        pruning_target = 0.025
+                        pruning_step = 0.025
+
                         print(">>>>>> HERE we simulate the pruning process, the global weight is in ", type(weights), "type and in ", len(weights), "size.")
                         original_model_path = 'paoding/models/cnn'
                         pruned_model_path = 'paoding/models/cnn_pruned'
@@ -444,12 +448,14 @@ class FederatedAveraging:
                         from paoding.evaluator import Evaluator
                         from paoding.utility.option import ModelType, SamplingMode
                         sampler = Sampler()
-                        sampler.set_strategy(mode=SamplingMode.STOCHASTIC, params=(0.75, 0.25))   
+                        #sampler.set_strategy(mode=SamplingMode.STOCHASTIC, params=pruning_params)  
+                        sampler.set_strategy(mode=SamplingMode.SCALE_ONLY, params=None)   
                         evaluator = None
+
                         pruner = Pruner(original_model_path, 
                                         ([], []), 
-                                        target=0.025,
-                                        step=0.005,
+                                        target=pruning_target,
+                                        step=pruning_step,
                                         sample_strategy=sampler, 
                                         model_type=ModelType.MNIST,
                                         seed_val=42)
@@ -462,6 +468,8 @@ class FederatedAveraging:
                         self.model = keras.models.load_model(pruned_model_path)
                         weights = self.model.get_weights()
                         
+                        output_list = [' >> pruning ', pruning_step, '/', pruning_target, ' with params ', pruning_params, '\n']
+                        logger.write(' '.join(map(str, output_list)))
                     ### [MARK] Gaussian noise added after aggregation
                     if self.config.server.gaussian_noise > 0.0:
                         logging.debug(f"Adding noise to aggregated model {self.config.server.gaussian_noise}")

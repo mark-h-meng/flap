@@ -13,6 +13,73 @@ import math
 import numpy as np
 import random
 
+# Scale-only method (no compensation to the deligate neurons)
+def pruning_scale_only_sparse(model, prune_percentage=None):
+    # Load the parameters and configuration of the input model
+    (w, g) = utils.load_param_and_config(model)
+
+    num_layers = len(model.layers)
+    total_pruned_count = 0
+    layer_idx = 0
+
+    while layer_idx < num_layers - 1:
+        
+        # Exclude non FC layers
+        if "dense" in model.layers[layer_idx].name:
+            # print("Pruning Operation Looking at Layer", layer_idx)
+
+            num_prev_neurons = len(w[layer_idx][0])
+            print("Num. of neurons at the previou layer", num_prev_neurons)
+            num_curr_neurons = len(w[layer_idx][0][0])
+            print("Num. of neurons at the current layer", num_curr_neurons)
+
+            # find the candidates neuron to be pruned according to the saliency
+            if prune_percentage is not None:
+                num_weight_to_prune = math.ceil(prune_percentage * num_curr_neurons * num_prev_neurons)
+            else:
+                num_weight_to_prune = 1
+            print("Num. of weights to be pruned:", num_weight_to_prune)
+
+            curr_layer_weights = w[layer_idx][0][0]
+            #print("curr_layer_weights -- size", curr_layer_weights.size)
+            for i in range(1, num_prev_neurons):
+                curr_layer_weights = np.concatenate((curr_layer_weights, w[layer_idx][0][i]), axis=0)
+                #print("curr_layer_weights -- size", curr_layer_weights.size)
+
+            curr_layer_weights = np.absolute(curr_layer_weights)
+
+            assert len(curr_layer_weights) == num_prev_neurons * num_curr_neurons, \
+                "Wrong size of parameters at layer " + str(layer_idx) + ": curr_layer_weights (" + str(curr_layer_weights.size) +\
+                    ") vs num_prev_neurons * num_curr_neurons (" + str(num_prev_neurons * num_curr_neurons) + ")"
+            
+            indexes_to_prune = []
+            for i in range(0, num_weight_to_prune):
+                idx = np.argmin(curr_layer_weights)
+                indexes_to_prune.append(idx)
+
+                idx_neuron_prev_layer = int(idx / num_curr_neurons)
+                idx_neuron_curr_layer = idx % num_curr_neurons
+                #print("idx_neuron_prev_layer", idx_neuron_prev_layer)
+                #print("idx_neuron_curr_layer", idx_neuron_curr_layer)
+                #print("min(curr_layer_weights)", min(curr_layer_weights))
+
+                assert abs(w[layer_idx][0][idx_neuron_prev_layer][idx_neuron_curr_layer]) == min(curr_layer_weights), \
+                    "Index error while finding the minimal parameters at layer " + str(layer_idx) + ": original weight (" + \
+                        str(w[layer_idx][0][idx_neuron_prev_layer][idx_neuron_curr_layer]) +") vs min value (" + \
+                            str(min(curr_layer_weights)) + ")"
+
+                curr_layer_weights[idx] = 999
+
+                w[layer_idx][0][idx_neuron_prev_layer][idx_neuron_curr_layer] = 0
+                total_pruned_count += 1
+
+            # Save the modified parameters to the model
+            model.layers[layer_idx].set_weights(w[layer_idx])
+
+        layer_idx += 1
+    print("Pruning accomplished -", total_pruned_count, "weights have been pruned")
+    return model
+
 
 # Saliency-only method
 def pruning_baseline(model, big_map, prune_percentage=None,
