@@ -99,6 +99,7 @@ class FederatedAveraging:
         self.test_loss = tf.keras.metrics.Mean(name='test_loss')
 
         self.aggregator = aggregators.build_aggregator(config)
+        self.attacker_full_knowledge = config.environment.attacker_full_knowledge
 
     def _init_log_directories(self):
         """Initializes directories in which log files are stored"""
@@ -300,7 +301,7 @@ class FederatedAveraging:
         return client_dropout_mask, weights_list
 
     ### [MARK] The entry point of FL core
-    def fit(self, pruning=False, log_file=None):
+    def fit(self, pruning=False, log_file=None, pruning_settings=(0,0)):
         """Trains the global model."""
         if log_file:
             with open(log_file, 'a', newline='\n') as logger:
@@ -323,15 +324,24 @@ class FederatedAveraging:
                 print('round=', 0, '\ttest_accuracy=', test_accuracy,
                     '\tadv_success=', adv_success, '\ttest_loss=', test_loss, flush=True)
                 
-                output_list = ['round=', 0, '\ttest_accuracy=', test_accuracy,
-                    '\tadv_success=', adv_success, '\ttest_loss=', test_loss, '\n']
-                logger.write(' '.join(map(str, output_list)))
+                # output_list = ['round=', 0, '\ttest_accuracy=', "{:.8}".format(test_accuracy), 
+                #            '\tadv_success=', "{:.4}".format(adv_success),
+                #            '\ttest_loss=', "{:.6}".format(test_loss),'\n']
+                
+                output_list = ['round=', '\ttest_accuracy', '\tadv_success',
+                            '\ttest_loss', 'duration', 'pruning',]
+                logger.write(','.join(map(str, output_list)))
+
+                output_list = [0, "{:.8}".format(test_accuracy), "{:.4}".format(adv_success),\
+                            "{:.6}".format(test_loss),]
+                logger.write('\n' + ','.join(map(str, output_list)))
 
                 import os
                 import psutil
 
                 for round in range(1, self.num_rounds + 1):
-
+                    has_been_pruned = 0
+                    has_attack = 0
                     process = psutil.Process(os.getpid())
                     logging.debug("Memory info: " + str(process.memory_info().rss))  # in bytes
 
@@ -354,6 +364,11 @@ class FederatedAveraging:
                             honest = indexes[indexes[:, 1] == False][:self.num_selected_clients - num_malicious_selected, 0]
                             malicious = indexes[indexes[:, 1] == True][0:num_malicious_selected][:, 0]
                             selected_clients = np.concatenate([malicious, honest])
+                            if self.attacker_full_knowledge:
+                                print("Attck deployed with FULL KNOWLEDGE")
+                            else:
+                                print("Attck deployed without full knowledge")
+
                         else:
                             honest = indexes[indexes[:, 1] == False][:self.num_selected_clients, 0]
                             selected_clients = honest
@@ -362,7 +377,7 @@ class FederatedAveraging:
                     client_dropout_masks, weights_list = self._create_weights_list(selected_clients)
 
                     # If attacker has full knowledge of a round
-                    intermediate_benign_client_weights = [] if self.config.environment.attacker_full_knowledge else None
+                    intermediate_benign_client_weights = [] if self.attacker_full_knowledge else None
 
                     #################
                     # TRAINING LOOP #
@@ -379,7 +394,7 @@ class FederatedAveraging:
                         self.client_objs[i].train(round)
                         # logging.debug(f"Client {i}: Train")
                         self.client_objs[i].set_model(None)
-                        if self.config.environment.attacker_full_knowledge:
+                        if self.attacker_full_knowledge:
                             intermediate_benign_client_weights.append(
                                 FederatedAveraging.compute_updates(self.client_objs[i].weights, weights_list[i])
                             )
@@ -404,6 +419,9 @@ class FederatedAveraging:
                                                     self.client_objs[i].weights, weights_list[i])
 
                     num_adversaries = np.count_nonzero([self.malicious_clients[i] for i in selected_clients])
+                    if num_adversaries > 0:
+                        has_attack = 1
+                    # print(" >>> Number of adversaries", num_adversaries)
                     selected_clients_list = [self.client_objs[i] for i in selected_clients]
 
                     ### [MARK] DO PRUNING (ON EACH ACTIVE CLIENT) HERE IF WE WANT IT TO BE DONE PRIOR TO THE AGGREGATION
@@ -430,11 +448,11 @@ class FederatedAveraging:
 
                     ### [MARK] DO PRUNING (ON EACH ACTIVE CLIENT) HERE IF WE WANT IT TO BE DONE PRIOR TO THE AGGREGATION
                     
-                    if pruning == 1 and round % 1 == 0:
+                    if pruning == 1 and round % 5 == 0:
                     
                         pruning_params = (0.75, 0.25)
-                        pruning_target = 0.025
-                        pruning_step = 0.025
+                        
+                        pruning_target, pruning_step = pruning_settings
 
                         print(">>>>>> HERE we simulate the pruning process, the global weight is in ", type(weights), "type and in ", len(weights), "size.")
                         original_model_path = 'paoding/models/cnn'
@@ -448,8 +466,8 @@ class FederatedAveraging:
                         from paoding.evaluator import Evaluator
                         from paoding.utility.option import ModelType, SamplingMode
                         sampler = Sampler()
-                        #sampler.set_strategy(mode=SamplingMode.STOCHASTIC, params=pruning_params)  
-                        sampler.set_strategy(mode=SamplingMode.SCALE_ONLY, params=None)   
+                        sampler.set_strategy(mode=SamplingMode.STOCHASTIC, params=pruning_params)  
+                        # sampler.set_strategy(mode=SamplingMode.SCALE_ONLY, params=None)   
                         evaluator = None
 
                         pruner = Pruner(original_model_path, 
@@ -468,8 +486,9 @@ class FederatedAveraging:
                         self.model = keras.models.load_model(pruned_model_path)
                         weights = self.model.get_weights()
                         
-                        output_list = [' >> pruning ', pruning_step, '/', pruning_target, ' with params ', pruning_params, '\n']
-                        logger.write(' '.join(map(str, output_list)))
+                        # output_list = [' >> pruning ', pruning_step, '/', pruning_target, ' with params ', pruning_params, '\n']
+                        # logger.write(' '.join(map(str, output_list)))
+                        has_been_pruned = 1
                     ### [MARK] Gaussian noise added after aggregation
                     if self.config.server.gaussian_noise > 0.0:
                         logging.debug(f"Adding noise to aggregated model {self.config.server.gaussian_noise}")
@@ -526,9 +545,18 @@ class FederatedAveraging:
                         print('round=', round, '\ttest_accuracy=', test_accuracy, '\tadv_success=', adv_success,
                             '\ttest_loss=', test_loss, '\tduration=', duration, flush=True)
                          
-                        output_list = ['round=', round, '\ttest_accuracy=', test_accuracy, '\tadv_success=', adv_success,
-                            '\ttest_loss=', test_loss, '\tduration=', duration, '\n']
-                        logger.write(' '.join(map(str, output_list)))
+                        # output_list = ['round=', round, '\ttest_accuracy=', "{:.8}".format(test_accuracy), 
+                        #    '\tadv_success=', "{:.4}".format(adv_success),
+                        #    '\ttest_loss=', "{:.6}".format(test_loss), 
+                        #    '\tduration=', "{:.6}".format(duration), '\n']
+                        # logger.write(' '.join(map(str, output_list)))
+                        output_list = [round, "{:.8}".format(test_accuracy), "{:.4}".format(adv_success),\
+                            "{:.6}".format(test_loss), "{:.6}".format(duration)]
+                        logger.write('\n' + ','.join(map(str, output_list)))
+                        if has_been_pruned == 1:
+                            logger.write(',PRU')
+                        if has_attack == 1:
+                            logger.write(',ADV')
 
                     else:
                         self.model.set_weights(weights)
@@ -638,6 +666,7 @@ class FederatedAveraging:
                 pred_inds = preds == batch_y
                 if self.config.environment.print_backdoor_eval:
                     logging.info(f"Backdoor predictions: {preds}")
+                print("Backdoor predictions:", preds, "vs", batch_y)
 
                 # This may break on large test sets
                 # adv_success = np.mean(pred_inds)

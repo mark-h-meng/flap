@@ -4,6 +4,7 @@ paoding/logs/*
 paoding/input
 paoding/save_figs
 logs/*
+logs-old/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -28,14 +28,19 @@ def save_model(model):
     weights = np.concatenate([x.flatten() for x in model.get_weights()])
     np.savetxt("resnet18_intrinsic_40k.txt", weights)
 
-def main():
+def main(config):
     models = [load_model()]
     local_time = time.localtime()
     timestamp = time.strftime('%b-%d-%H%M', local_time)
     
+    pruning_target = 0.01
+    pruning_step = 0.01
+    pruning_settings = (pruning_target, pruning_step)
+
     log_filename = "logs/" + config.client.model_name + "-" + timestamp 
     if config.environment.paoding:
-        log_filename += "-paoding" 
+        pruning_suffix = "-paoding-"+str(pruning_settings)
+        log_filename += pruning_suffix
     log_filename += ".txt"
 
     with open(log_filename, "a") as myfile:
@@ -49,11 +54,14 @@ def main():
     server_model.init()
 
     start_time = time.time()
-    server_model.fit(pruning=config.environment.paoding, log_file=log_filename)
+    
+    print(" >>> Attacker has full knowledge?", config.environment.attacker_full_knowledge)
+    server_model.fit(pruning=config.environment.paoding, log_file=log_filename, pruning_settings=pruning_settings)
+    
     end_time = time.time()
 
     with open(log_filename, "a") as myfile:
-        myfile.write("Elapsed time: " + str(end_time - start_time))
+        myfile.write("\nElapsed time: " + str(end_time - start_time))
     return
 
     # if args.hyperparameter_tuning.lower() == "true":
@@ -127,15 +135,9 @@ if __name__ == '__main__':
     np.random.seed(config.environment.seed)
     tf.random.set_seed(config.environment.seed)
 
+    repeat = 5
     # Now we try to adjust the task number of attack
-    for num_tasks in [1]:
-        config.client.malicious.backdoor.update({'tasks': num_tasks})
-        print(config.client.malicious.backdoor)
-       
-        for num_malicious in [1]:
-            config.environment.num_malicious_clients = num_malicious
-            print(config.environment.num_malicious_clients)
-            # Now we try to adjust the pruning option: [0, 1]
-            for paoding_option in [1]:
-                config.environment.paoding = paoding_option
-                main()
+    for paoding_option in [1]:
+        config.environment.paoding = paoding_option
+        for i in range(0, repeat):
+            main(config)

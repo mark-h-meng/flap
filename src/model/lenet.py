@@ -17,11 +17,11 @@ def build_lenet5(input_shape=(32, 32, 3), l2_reg=None):
     model.add(layers.MaxPooling2D())
 
     model.add(layers.Flatten())
-    model.add(layers.Dropout(do))
+    #model.add(layers.Dropout(do))
     model.add(layers.Dense(units=120, kernel_initializer='he_normal', kernel_regularizer=regularizer, bias_regularizer=regularizer, activation='relu'))
-    model.add(layers.Dropout(do))
+    #model.add(layers.Dropout(do))
     model.add(layers.Dense(units=84, kernel_initializer='he_normal', kernel_regularizer=regularizer, bias_regularizer=regularizer, activation='relu'))
-    model.add(layers.Dropout(do))
+    #model.add(layers.Dropout(do))
     model.add(layers.Dense(units=10, activation='softmax'))
 
     return model

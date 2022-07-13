@@ -47,11 +47,26 @@ def pruning_scale_only_sparse(model, prune_percentage=None):
                 #print("curr_layer_weights -- size", curr_layer_weights.size)
 
             curr_layer_weights = np.absolute(curr_layer_weights)
+            curr_layer_weights = np.sort(curr_layer_weights)
+            prune_threshold = curr_layer_weights[num_weight_to_prune]
 
             assert len(curr_layer_weights) == num_prev_neurons * num_curr_neurons, \
                 "Wrong size of parameters at layer " + str(layer_idx) + ": curr_layer_weights (" + str(curr_layer_weights.size) +\
                     ") vs num_prev_neurons * num_curr_neurons (" + str(num_prev_neurons * num_curr_neurons) + ")"
             
+            for idx in range(0, num_prev_neurons * num_curr_neurons):
+                
+                if total_pruned_count >= num_weight_to_prune:
+                    break
+                
+                idx_neuron_prev_layer = int(idx / num_curr_neurons)
+                idx_neuron_curr_layer = idx % num_curr_neurons
+
+                if abs(w[layer_idx][0][idx_neuron_prev_layer][idx_neuron_curr_layer]) <= prune_threshold:
+                    w[layer_idx][0][idx_neuron_prev_layer][idx_neuron_curr_layer] = 0
+                    total_pruned_count += 1
+            
+            '''
             indexes_to_prune = []
             for i in range(0, num_weight_to_prune):
                 idx = np.argmin(curr_layer_weights)
@@ -72,7 +87,8 @@ def pruning_scale_only_sparse(model, prune_percentage=None):
 
                 w[layer_idx][0][idx_neuron_prev_layer][idx_neuron_curr_layer] = 0
                 total_pruned_count += 1
-
+            '''
+            
             # Save the modified parameters to the model
             model.layers[layer_idx].set_weights(w[layer_idx])
 
