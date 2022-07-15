@@ -41,6 +41,9 @@ def main(config):
     if config.environment.paoding:
         pruning_suffix = "-paoding-"+str(pruning_settings)
         log_filename += pruning_suffix
+    if config.environment.attacker_full_knowledge == 'true':
+        pruning_suffix = "-fullknow"
+        log_filename += pruning_suffix
     log_filename += ".txt"
 
     with open(log_filename, "a") as myfile:
@@ -135,9 +138,9 @@ if __name__ == '__main__':
     np.random.seed(config.environment.seed)
     tf.random.set_seed(config.environment.seed)
 
-    repeat = 5
+    repeat = 3
     # Now we try to adjust the task number of attack
-    for paoding_option in [1]:
+    for paoding_option in [0,1]:
         config.environment.paoding = paoding_option
         for i in range(0, repeat):
             main(config)

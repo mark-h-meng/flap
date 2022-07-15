@@ -8,6 +8,8 @@ import tensorflow as tf
 from src.data import image_augmentation
 import logging
 
+USE_POISONED_TRAIN_DATA_FOR_EVAL = True
+
 class GlobalDataset:
     """
     A GlobalDataset represents a dataset as a whole. It has two purposes.
@@ -84,10 +86,10 @@ class GlobalDataset:
                 inds = np.where(y_train_me == attack_objective[0])[0]  # Find all
                 logging.debug(f"{i} Found {len(inds)} of class {attack_objective} to poison!")
 
-                test_inds = np.ones(x_train_me.shape[0], dtype=bool)
-                test_inds[inds] = False
+                poison_inds = np.ones(x_train_me.shape[0], dtype=bool)
+                poison_inds[inds] = False
                 x_aux, y_aux = x_train_me[inds], y_train_me[inds]
-                x_train_me, y_train_me = x_train_me[test_inds], y_train_me[test_inds]
+                x_train_me, y_train_me = x_train_me[poison_inds], y_train_me[poison_inds]
 
                 # randomly permute labels
                 mal_labels = np.repeat(attack_objective[1], len(y_aux))
@@ -117,15 +119,38 @@ class GlobalDataset:
         self.y_aux_train = np.concatenate(total_y_aux)
         self.mal_aux_labels_train = np.concatenate(total_mal_aux_labels).astype(np.uint8)
 
-        # Assign train as test set for now ... ! Depends on how we want to implement the behavior
-        self.x_aux_test = self.x_aux_train
-        self.y_aux_test = self.y_aux_train
-        self.mal_aux_labels_test = self.mal_aux_labels_train
-
+        # Begining of Mark's modification: test set should be different from train set
+        if USE_POISONED_TRAIN_DATA_FOR_EVAL:
+            # Assign train as test set for now ... ! Depends on how we want to implement the behavior
+            self.x_aux_test = self.x_aux_train
+            print(" >>> Size of x_aux_test", len(self.x_aux_test))
+            self.y_aux_test = self.y_aux_train
+            print(" >>> Size of y_aux_test", len(self.y_aux_test))
+            self.mal_aux_labels_test = self.mal_aux_labels_train
+            print(" >>> Size of mal_aux_labels_test", len(self.mal_aux_labels_test))
+        else:
+            inds = None
+            x_test_me, y_test_me = self.x_test, self.y_test
+            print(" >>> test set size:", len(x_test_me))
+            print(" >>> test set:", y_test_me[:15])
+            inds = np.where(y_test_me == attack_objective[0])[0]  # Find all
+            print(" >>> inds:", inds[:15])
+            logging.debug(f"Found {len(inds)} of class {attack_objective} to test adversarial success rate!")
+            #print(" >>> Target test indexes", inds[0])
+            x_aux_test, y_aux_test = x_test_me[inds], y_test_me[inds]
+            # randomly permute labels
+            mal_labels_test = np.repeat(attack_objective[1], len(y_aux_test))
+            
+            self.x_aux_test = np.concatenate([x_aux_test])
+            print(" >>> Size of x_aux_test", len(self.x_aux_test))
+            self.y_aux_test = np.concatenate([y_aux_test])
+            print(" >>> Size of y_aux_test", len(self.y_aux_test))
+            self.mal_aux_labels_test = np.concatenate([mal_labels_test]).astype(np.uint8)
+            print(" >>> Size of mal_aux_labels_test", len(self.mal_aux_labels_test))
+        # END of Mark's modification
         # self.build_aux_generator(augment_size)
 
         print(f"Got {len(self.x_aux_train)}/{aux_sample_size} samples for {num_backdoor_tasks} tasks!")
-
     # def build_aux_generator(self, augment_size):
     #     # self.aux_test_generator = tf.data.Dataset.from_tensor_slices((self.x_aux_test, self.y_aux_test))
     #     if augment_size == 0:

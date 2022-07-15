@@ -328,7 +328,7 @@ class FederatedAveraging:
                 #            '\tadv_success=', "{:.4}".format(adv_success),
                 #            '\ttest_loss=', "{:.6}".format(test_loss),'\n']
                 
-                output_list = ['round=', '\ttest_accuracy', '\tadv_success',
+                output_list = ['round', '\ttest_accuracy', '\tadv_success',
                             '\ttest_loss', 'duration', 'pruning',]
                 logger.write(','.join(map(str, output_list)))
 
@@ -448,15 +448,21 @@ class FederatedAveraging:
 
                     ### [MARK] DO PRUNING (ON EACH ACTIVE CLIENT) HERE IF WE WANT IT TO BE DONE PRIOR TO THE AGGREGATION
                     
-                    if pruning == 1 and round % 5 == 0:
+                    if pruning == 1 and round > 0 and round % 5 == 0:
                     
                         pruning_params = (0.75, 0.25)
                         
                         pruning_target, pruning_step = pruning_settings
 
                         print(">>>>>> HERE we simulate the pruning process, the global weight is in ", type(weights), "type and in ", len(weights), "size.")
-                        original_model_path = 'paoding/models/cnn'
-                        pruned_model_path = 'paoding/models/cnn_pruned'
+                        
+                        local_time = time.localtime()
+                        timestamp_str = time.strftime('%b%d%H%M', local_time)
+                        #original_model_path = 'paoding/models/cnn'
+                        #pruned_model_path = 'paoding/models/cnn_pruned'
+                        original_model_path = 'paoding/models/'+timestamp_str
+                        pruned_model_path = original_model_path+'_paoding'
+                        pruned_model_path_final = original_model_path+'_pruned'
 
                         self.model.set_weights(weights)
                         self.model.save(original_model_path)
@@ -467,7 +473,7 @@ class FederatedAveraging:
                         from paoding.utility.option import ModelType, SamplingMode
                         sampler = Sampler()
                         sampler.set_strategy(mode=SamplingMode.STOCHASTIC, params=pruning_params)  
-                        # sampler.set_strategy(mode=SamplingMode.SCALE_ONLY, params=None)   
+                        #sampler.set_strategy(mode=SamplingMode.SCALE_ONLY, params=None)   
                         evaluator = None
 
                         pruner = Pruner(original_model_path, 
@@ -483,12 +489,25 @@ class FederatedAveraging:
                         pruner.save_model(pruned_model_path)
                         
                         from tensorflow import keras
-                        self.model = keras.models.load_model(pruned_model_path)
+                        # Here we prune CONV neurons
+                        
+                        import cnn_prune as pruning_utils
+                        if self.config.environment.pruneconv:
+                            method = 'l1'
+                            opt = keras.optimizers.RMSprop(lr=0.0001, decay=1e-6)
+                            model = keras.models.load_model(pruned_model_path)
+                            model_pruned = pruning_utils.prune_model(model, perc=pruning_target, opt=opt, method=method)
+                            model_pruned.save(pruned_model_path_final)
+                            self.model = keras.models.load_model(pruned_model_path_final)
+                        else:    
+                            self.model = keras.models.load_model(pruned_model_path)
+                        
                         weights = self.model.get_weights()
                         
                         # output_list = [' >> pruning ', pruning_step, '/', pruning_target, ' with params ', pruning_params, '\n']
                         # logger.write(' '.join(map(str, output_list)))
                         has_been_pruned = 1
+
                     ### [MARK] Gaussian noise added after aggregation
                     if self.config.server.gaussian_noise > 0.0:
                         logging.debug(f"Adding noise to aggregated model {self.config.server.gaussian_noise}")
@@ -553,10 +572,11 @@ class FederatedAveraging:
                         output_list = [round, "{:.8}".format(test_accuracy), "{:.4}".format(adv_success),\
                             "{:.6}".format(test_loss), "{:.6}".format(duration)]
                         logger.write('\n' + ','.join(map(str, output_list)))
+                        logger.write(',')
                         if has_been_pruned == 1:
-                            logger.write(',PRU')
+                            logger.write('PRU ')
                         if has_attack == 1:
-                            logger.write(',ADV')
+                            logger.write('ADV')
 
                     else:
                         self.model.set_weights(weights)
@@ -652,26 +672,28 @@ class FederatedAveraging:
             batches = 0
             attack_config: AttackDatasetConfig = self.attack_dataset
             amount_images = max(attack_config.augment_times, self.global_dataset.x_aux_test.shape[0])
+            #print(" >>> Amount images is max of attack_config.augment_times", attack_config.augment_times, " and self.global_dataset.x_aux_test.shape[0]", self.global_dataset.x_aux_test.shape[0])
             batch_size = min(self.global_dataset.x_aux_test.shape[0], self.config.client.benign_training.batch_size)
+            #print(" >>> Batch size is min of self.global_dataset.x_aux_test.shape[0]", self.global_dataset.x_aux_test.shape[0], "and self.config.client.benign_training.batch_size", self.config.client.benign_training.batch_size)
             total_batches = int(amount_images / batch_size) # handle case ?
-
-
-
+            #print(" >>> Total batch is", total_batches)
             for batch_x, batch_y in self.global_dataset.get_aux_generator(self.config.client.benign_training.batch_size,
                                                                           attack_config.augment_times,
                                                                           attack_config.augment_data,
                                                                           attack_config.type,
                                                                           attack_config.max_test_batches):
+                # Here we want to know if given batch_x, whether the global model will predict it as batch_y (malicious label).
                 preds = self.model(batch_x, training=False).numpy().argmax(axis=1)
                 pred_inds = preds == batch_y
                 if self.config.environment.print_backdoor_eval:
                     logging.info(f"Backdoor predictions: {preds}")
-                print("Backdoor predictions:", preds, "vs", batch_y)
+                # print("Backdoor predictions:", preds, "vs", batch_y)
 
                 # This may break on large test sets
                 # adv_success = np.mean(pred_inds)
                 all_adv_success.append(pred_inds)
                 batches += 1
+                # print(" >>>>> Evaluate adv batch", batches, "- succ rate", np.mean(pred_inds), "among", len(preds), "samples")
                 if batches > total_batches:
                     break # manually
 

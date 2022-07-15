@@ -1,18 +1,17 @@
 environment:
   seed: 42
   #num_clients: 3383
-  num_clients: 100
+  num_clients: 33
   num_selected_clients: 30
-  num_malicious_clients: 10
+  num_malicious_clients: 3
   experiment_name: "backdoor_tasks"
   attacker_full_knowledge: true
-  attack_frequency: 0.5
+  attack_frequency: 0.2
   # attack freq 0.2 means attacking for every 1/0.2=5 rounds
   paoding: 0
-  pruneconv: 1
 
 server:
-  num_rounds: 30
+  num_rounds: 50
   num_test_batches: 5
   aggregator:
     #name: FedAvg
@@ -22,8 +21,7 @@ server:
   global_learning_rate: -1
 
 client:
-  #model_name: mnist_cnn
-  model_name: lenet5_cifar
+  model_name: mnist_cnn
 #  model_name: dev
 #  clip:
 #    type: median_l2
@@ -58,6 +56,5 @@ client:
       augment_times: 20
 
 dataset:
-  dataset: cifar10
-  # dataset: femnist
+  dataset: femnist
   data_distribution: nonIID

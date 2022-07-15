@@ -103,6 +103,9 @@ class Environment(DataClassYAMLMixin):
 
     paoding: int = 0 # randomness seed
     """Using paoding to prune the aggregated model"""
+    
+    pruneconv: int = 0 # randomness seed
+    """Prune the convolutional layer"""
 @dataclass
 class Dataset(DataClassYAMLMixin):
     """Defines the dataset to use."""

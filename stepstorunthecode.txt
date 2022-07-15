@@ -1,4 +1,4 @@
-conda activate huasong
+conda activate flpaoding
 cd fl-analysis
 pipenv shell
 python -m src.main -c config.yml
