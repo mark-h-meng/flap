@@ -205,7 +205,7 @@ class FederatedAveraging:
                 # ds = GeneratorDataset(dataset, self.batch_size)
                 if mal_clients[bid]:
                     if self.attack_dataset.type != "pixel_pattern":
-                        print(f"Replacing value {self.attack_dataset.type}")
+                        #print(f"Replacing value {self.attack_dataset.type}")
                         # This is very ugly, but we do not want to assign pixel pattern as it uses
                         # training data of the client...
                         ds.x_aux, ds.y_aux, ds.mal_aux_labels = self.global_dataset.x_aux_train, \
@@ -318,7 +318,6 @@ class FederatedAveraging:
                 #     optimizer=tf.keras.optimizers.Adam(0.001),
                 #     metrics=['accuracy']
                 # )
-
                 logging.info("Starting training...")
                 test_accuracy, adv_success, test_loss = self.evaluate()
                 print('round=', 0, '\ttest_accuracy=', test_accuracy,
@@ -329,7 +328,7 @@ class FederatedAveraging:
                 #            '\ttest_loss=', "{:.6}".format(test_loss),'\n']
                 
                 output_list = ['round', '\ttest_accuracy', '\tadv_success',
-                            '\ttest_loss', 'duration', 'pruning',]
+                            '\ttest_loss', 'duration', 'note',]
                 logger.write(','.join(map(str, output_list)))
 
                 output_list = [0, "{:.8}".format(test_accuracy), "{:.4}".format(adv_success),\
@@ -344,7 +343,6 @@ class FederatedAveraging:
                     has_attack = 0
                     process = psutil.Process(os.getpid())
                     logging.debug("Memory info: " + str(process.memory_info().rss))  # in bytes
-
                     start_time = time.time()
 
                     if self.attack_frequency is None:
@@ -360,14 +358,12 @@ class FederatedAveraging:
 
                         ### [MARK] Insert those malicious clients into all active clients for the current round, depends on attack frequency
                         if round % (1 / self.attack_frequency) == 0:
+                            
+                            logging.info("FULL knowledge?"+ str(self.attacker_full_knowledge))
                             num_malicious_selected = self.config.environment.num_selected_malicious_clients or self.num_malicious_clients
                             honest = indexes[indexes[:, 1] == False][:self.num_selected_clients - num_malicious_selected, 0]
                             malicious = indexes[indexes[:, 1] == True][0:num_malicious_selected][:, 0]
                             selected_clients = np.concatenate([malicious, honest])
-                            if self.attacker_full_knowledge:
-                                print("Attck deployed with FULL KNOWLEDGE")
-                            else:
-                                print("Attck deployed without full knowledge")
 
                         else:
                             honest = indexes[indexes[:, 1] == False][:self.num_selected_clients, 0]
@@ -395,6 +391,7 @@ class FederatedAveraging:
                         # logging.debug(f"Client {i}: Train")
                         self.client_objs[i].set_model(None)
                         if self.attacker_full_knowledge:
+                            #  [!] Malicious client(s) has obtained all updates from benign clients
                             intermediate_benign_client_weights.append(
                                 FederatedAveraging.compute_updates(self.client_objs[i].weights, weights_list[i])
                             )
@@ -574,9 +571,9 @@ class FederatedAveraging:
                         logger.write('\n' + ','.join(map(str, output_list)))
                         logger.write(',')
                         if has_been_pruned == 1:
-                            logger.write('PRU ')
+                            logger.write('[P]')
                         if has_attack == 1:
-                            logger.write('ADV')
+                            logger.write('[A]')
 
                     else:
                         self.model.set_weights(weights)
@@ -590,6 +587,8 @@ class FederatedAveraging:
 
                 log_data(self.experiment_dir, rounds, accuracies, adv_success_list)
                 self.log_hparams(rounds, accuracies, adv_success_list)
+                
+                logger.write('\n')
 
     def noise_with_layer(self, w):
         sigma = self.config.server.gaussian_noise

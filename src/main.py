@@ -26,28 +26,17 @@ def load_model():
 
 def save_model(model):
     weights = np.concatenate([x.flatten() for x in model.get_weights()])
-    np.savetxt("resnet18_intrinsic_40k.txt", weights)
+    #np.savetxt("resnet18_intrinsic_40k.txt", weights)
+    np.savetxt("temp_model.txt", weights)
 
-def main(config):
+def main(config, pruning_settings, log_filename):
     models = [load_model()]
-    local_time = time.localtime()
-    timestamp = time.strftime('%b-%d-%H%M', local_time)
     
-    pruning_target = 0.01
-    pruning_step = 0.01
-    pruning_settings = (pruning_target, pruning_step)
-
-    log_filename = "logs/" + config.client.model_name + "-" + timestamp 
-    if config.environment.paoding:
-        pruning_suffix = "-paoding-"+str(pruning_settings)
-        log_filename += pruning_suffix
-    if config.environment.attacker_full_knowledge == 'true':
-        pruning_suffix = "-fullknow"
-        log_filename += pruning_suffix
-    log_filename += ".txt"
-
+    # Log some critical info of the current training
     with open(log_filename, "a") as myfile:
-        myfile.write(str(config) + "\n")
+        myfile.write(str(config.environment) + "\n")
+        myfile.write(str(config.server.aggregator) + "\n")
+        myfile.write(str(config.client.malicious.backdoor) + "\n")
 
     if config.client.malicious is not None:
         config.client.malicious.attack_type = Attack.UNTARGETED.value \
@@ -58,13 +47,12 @@ def main(config):
 
     start_time = time.time()
     
-    print(" >>> Attacker has full knowledge?", config.environment.attacker_full_knowledge)
     server_model.fit(pruning=config.environment.paoding, log_file=log_filename, pruning_settings=pruning_settings)
     
     end_time = time.time()
 
     with open(log_filename, "a") as myfile:
-        myfile.write("\nElapsed time: " + str(end_time - start_time))
+        myfile.write("Elapsed time: " + str(end_time - start_time) + "\n")
     return
 
     # if args.hyperparameter_tuning.lower() == "true":
@@ -138,9 +126,34 @@ if __name__ == '__main__':
     np.random.seed(config.environment.seed)
     tf.random.set_seed(config.environment.seed)
 
+    pruning_target = 0.01
+    pruning_step = 0.01
+    pruning_settings = (pruning_target, pruning_step)
+
+    local_time = time.localtime()
+    timestamp = time.strftime('%b-%d-%H%M', local_time)
+    log_filename = "logs/" + config.client.model_name + "-" + timestamp 
+    if config.environment.paoding:
+        pruning_suffix = "-paoding-"+str(pruning_settings)
+        log_filename += pruning_suffix
+    #if config.environment.attacker_full_knowledge == 'true':
+    #    pruning_suffix = "-fullknow"
+    #    log_filename += pruning_suffix
+    log_filename += ".txt"
+
+    
+    #config.server.aggregator['args']['beta']=0.4
+    config.server.aggregator['name'] = 'FedAvg'
+    config.server.aggregator['args'] = {}
     repeat = 3
+    
     # Now we try to adjust the task number of attack
     for paoding_option in [0,1]:
         config.environment.paoding = paoding_option
-        for i in range(0, repeat):
-            main(config)
+        for full_know in [True, False]:
+            config.environment.attacker_full_knowledge = full_know
+            for num_malicious in [3, 9, 15]:
+                config.environment.num_malicious_clients = num_malicious
+                for attack_freq in [0.2, 0.5, 1]:
+                    for i in range(0, repeat):
+                        main(config, pruning_settings, log_filename)

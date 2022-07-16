@@ -57,6 +57,7 @@ class TrimmedMean(Aggregator):
         assert 0 < self.beta < 1/2, "Beta must be between zero and 1/2!"
 
     def aggregate(self, global_weights, client_weight_list):
+        logging.info("TrimmedMean is selected, beta = "+str(self.beta))
         assert self.beta < 0.5, "Beta must be smaller than 0.5!"
 
         truncate_count = int(self.beta * len(client_weight_list))

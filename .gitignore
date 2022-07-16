@@ -5,6 +5,7 @@ paoding/input
 paoding/save_figs
 logs/*
 logs-old/*
+temp_model.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
