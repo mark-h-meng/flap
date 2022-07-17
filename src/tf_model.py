@@ -34,7 +34,7 @@ class Model:
                 tf.keras.layers.MaxPooling2D(pool_size=2),
                 # tf.keras.layers.Dropout(0.3),
                 tf.keras.layers.Flatten(),
-                tf.keras.layers.Dense(256, activation='relu'),
+                tf.keras.layers.Dense(64, activation='relu'),
                 #tf.keras.layers.Dense(32, activation='relu'),
                 # tf.keras.layers.Dropout(0.5),
                 tf.keras.layers.Dense(10, activation='softmax')

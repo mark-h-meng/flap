@@ -154,6 +154,7 @@ if __name__ == '__main__':
             config.environment.attacker_full_knowledge = full_know
             for num_malicious in [3, 9, 15]:
                 config.environment.num_malicious_clients = num_malicious
-                for attack_freq in [0.2, 0.5, 1]:
+                for attack_freq in [0.2, 1]:
+                    config.environment.attack_frequency = attack_freq
                     for i in range(0, repeat):
                         main(config, pruning_settings, log_filename)

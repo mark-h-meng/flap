@@ -3,22 +3,22 @@ environment:
   #num_clients: 3383
   num_clients: 100
   num_selected_clients: 30
-  num_malicious_clients: 10
+  num_malicious_clients: 9
   experiment_name: "backdoor_tasks"
-  attacker_full_knowledge: true
+  attacker_full_knowledge: False
   attack_frequency: 0.5
   # attack freq 0.2 means attacking for every 1/0.2=5 rounds
   paoding: 0
   pruneconv: 1
 
 server:
-  num_rounds: 30
+  num_rounds: 40
   num_test_batches: 5
   aggregator:
-    #name: FedAvg
-    name: TrimmedMean
-    args:
-      beta: 0.1
+    name: FedAvg
+    #name: TrimmedMean
+    #args:
+    #  beta: 0.1
   global_learning_rate: -1
 
 client:
