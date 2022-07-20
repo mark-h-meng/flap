@@ -81,7 +81,7 @@ if __name__ == '__main__':
     config.server.aggregator['args'] = {}
     
     config.environment.attacker_full_knowledge = False
-    config.server.num_rounds = 25
+    # config.server.num_rounds = 25
     config.environment.num_malicious_clients = 9 # 30% OUT OF 30 CLIENTS
     config.environment.attack_frequency = 0.5
     config.environment.paoding = 1
@@ -94,7 +94,7 @@ if __name__ == '__main__':
 
     TUNING_PRUNING = False
     RESUME = 0
-    RQ1 = 0
+    RQ1 = 1
     RQ2 = 0
     # Now we perform a series of experiments by adjusting certain settings
     exp_idx = 0
@@ -127,9 +127,9 @@ if __name__ == '__main__':
     elif RQ1:
         repeat = 2
         ## Exp 1. Adjust attack frequency
-        for attack_freq in [0.2]:
+        for attack_freq in [0.1,0.2,0.5,1]:
             config.environment.attack_frequency = attack_freq
-            for paoding_option in [1]:
+            for paoding_option in [0,1]:
                 config.environment.paoding = paoding_option
                 curr_exp_settings = []
                 curr_exp_settings.append(str(attack_freq))
@@ -148,7 +148,7 @@ if __name__ == '__main__':
                 exp_idx += 1
     
         ## Exp 2. Adjust malicious clients (excluding default mode (9))
-        for num_malicious in [1]:
+        for num_malicious in [1,3,9,15]:
             config.environment.num_malicious_clients = num_malicious
             config.client.malicious.backdoor['tasks'] = num_malicious
             for paoding_option in [0,1]:

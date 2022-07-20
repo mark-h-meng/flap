@@ -50,6 +50,12 @@ class Model:
                 tf.keras.layers.Dense(32, activation='relu', kernel_regularizer=regularizer, bias_regularizer=regularizer),
                 tf.keras.layers.Dense(10, activation='softmax'),
             ])
+        elif model_name == 'fc': # Meier et al. ICDAR 2011
+            model = tf.keras.Sequential([
+                tf.keras.layers.Flatten(input_shape=(28,28,1)),
+                tf.keras.layers.Dense(800, activation='relu'),
+                tf.keras.layers.Dense(10, activation='softmax'),
+            ])
         elif model_name == 'bhagoji':
             model = tf.keras.Sequential([
                 tf.keras.layers.Conv2D(64, kernel_size=(5, 5), padding='valid', activation='relu', input_shape=(28, 28, 1)),

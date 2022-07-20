@@ -1,6 +1,6 @@
 environment:
   seed: 42
-  num_clients: 3383
+  num_clients: 100
   num_selected_clients: 30
   num_malicious_clients: 9
   experiment_name: "backdoor_tasks"
@@ -23,7 +23,7 @@ server:
 
 client:
   #model_name: mnist_cnn
-  model_name: lenet5_cifar
+  model_name: resnet18
 #  model_name: dev
 #  clip:
 #    type: median_l2

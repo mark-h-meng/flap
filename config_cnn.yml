@@ -13,7 +13,7 @@ environment:
   pruneconv: 0
 
 server:
-  num_rounds: 40
+  num_rounds: 25
   num_test_batches: 5
   aggregator:
     name: FedAvg
