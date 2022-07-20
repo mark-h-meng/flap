@@ -41,6 +41,7 @@ class FederatedAveraging:
         self.num_selected_clients = config.environment.num_selected_clients
         self.num_malicious_clients = config.environment.num_malicious_clients
         self.attack_frequency = config.environment.attack_frequency
+        self.prune_frequency = config.environment.prune_frequency
         self.attack_type = Attack(config.client.malicious.attack_type) \
             if config.client.malicious is not None else None
 
@@ -331,7 +332,7 @@ class FederatedAveraging:
                             '\ttest_loss', 'duration', 'note',]
                 logger.write(','.join(map(str, output_list)))
 
-                output_list = [0, "{:.8}".format(test_accuracy), "{:.4}".format(adv_success),\
+                output_list = [0, "{:.8}".format(test_accuracy/1.0), "{:.4}".format(adv_success/1.0),\
                             "{:.6}".format(test_loss),]
                 logger.write('\n' + ','.join(map(str, output_list)))
 
@@ -354,7 +355,7 @@ class FederatedAveraging:
                         indexes = np.array([[i, self.client_objs[i].malicious] for i in range(len(self.client_objs))])
                         np.random.shuffle(indexes)
 
-                        assert len(indexes[indexes[:, 1] == True]) > 0, "There are 0 malicious attackers."
+                        # assert len(indexes[indexes[:, 1] == True]) > 0, "There are 0 malicious attackers."
 
                         ### [MARK] Insert those malicious clients into all active clients for the current round, depends on attack frequency
                         if round % (1 / self.attack_frequency) == 0:
@@ -445,7 +446,7 @@ class FederatedAveraging:
 
                     ### [MARK] DO PRUNING (ON EACH ACTIVE CLIENT) HERE IF WE WANT IT TO BE DONE PRIOR TO THE AGGREGATION
                     
-                    if pruning == 1 and round > 0 and round % 5 == 0:
+                    if pruning == 1 and round > 0 and round % (1 / self.prune_frequency) == 0 == 0:
                     
                         pruning_params = (0.75, 0.25)
                         
@@ -489,7 +490,7 @@ class FederatedAveraging:
                         # Here we prune CONV neurons
                         
                         import cnn_prune as pruning_utils
-                        if self.config.environment.pruneconv:
+                        if self.config.environment.pruneconv and round <= 18:
                             method = 'l1'
                             opt = keras.optimizers.RMSprop(lr=0.0001, decay=1e-6)
                             model = keras.models.load_model(pruned_model_path)
@@ -566,7 +567,7 @@ class FederatedAveraging:
                         #    '\ttest_loss=', "{:.6}".format(test_loss), 
                         #    '\tduration=', "{:.6}".format(duration), '\n']
                         # logger.write(' '.join(map(str, output_list)))
-                        output_list = [round, "{:.8}".format(test_accuracy), "{:.4}".format(adv_success),\
+                        output_list = [round, "{:.8}".format(test_accuracy/1.0), "{:.4}".format(adv_success/1.0),\
                             "{:.6}".format(test_loss), "{:.6}".format(duration)]
                         logger.write('\n' + ','.join(map(str, output_list)))
                         logger.write(',')

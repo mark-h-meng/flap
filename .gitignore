@@ -4,7 +4,7 @@ paoding/logs/*
 paoding/input
 paoding/save_figs
 logs/*
-logs-old/*
+logs-*/*
 temp_model.txt
 
 # Byte-compiled / optimized / DLL files

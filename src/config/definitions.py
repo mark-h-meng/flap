@@ -106,6 +106,10 @@ class Environment(DataClassYAMLMixin):
     
     pruneconv: int = 0 # randomness seed
     """Prune the convolutional layer"""
+
+    prune_frequency: Optional[float] = 0.2 #
+    """Frequency of pruning. Default is 0.2"""
+
 @dataclass
 class Dataset(DataClassYAMLMixin):
     """Defines the dataset to use."""

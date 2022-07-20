@@ -248,8 +248,8 @@ def prune_model(model, perc, opt, method='l1', layer=None):
     
     
     #n_pruned = compute_pruned_count(model, perc, layer)
-    # Mannually set number to be pruned to 1
-    n_pruned = 1
+    # Mannually set number to be pruned to 2
+    n_pruned = 2
 
     if method =='l1':
         to_prune = prune_l1(model, n_pruned, layer)    
@@ -308,7 +308,7 @@ def compute_pruned_count(model, perc, layer=None):
             # print(" XXX ", i, layer, model.layers[i].name)
             # Mark's modification on 14 Jul
             if 'conv' in model.layers[i].name and not 'conv2d_input' in model.layers[i].name:
-                #print(model.layers[i].name)
+                print(model.layers[i].name)
                 #print(model.layers[i].output_shape)
                 #print(model.layers[i].output_shape[3])
                 nb_filters += model.layers[i].output_shape[3]
