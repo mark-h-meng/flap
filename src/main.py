@@ -94,7 +94,7 @@ if __name__ == '__main__':
 
     TUNING_PRUNING = False
     RESUME = 0
-    RQ1 = 0
+    RQ1 = 1
     RQ23 = 1
     # Now we perform a series of experiments by adjusting certain settings
     exp_idx = 0
@@ -170,7 +170,7 @@ if __name__ == '__main__':
                         #    print("An exception occurred in experiment no." + str(exp_idx))                   
                 exp_idx += 1
     elif RQ23:
-        repeat = 5
+        repeat = 3
         for paoding_option in [0,1]:
             config.environment.paoding = paoding_option
             curr_exp_settings = []

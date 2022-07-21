@@ -12,7 +12,7 @@ environment:
   pruneconv: 0
 
 server:
-  num_rounds: 40
+  num_rounds: 30
   num_test_batches: 5
   aggregator:
     name: FedAvg
@@ -23,7 +23,7 @@ server:
 
 client:
   #model_name: mnist_cnn
-  model_name: fc
+  model_name: dev_fc_intrinsic
 #  model_name: dev
 #  clip:
 #    type: median_l2
