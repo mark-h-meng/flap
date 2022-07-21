@@ -1,7 +1,13 @@
-conda activate flpaoding
-cd fl-analysis
-pipenv shell
-python -m src.main -c config.yml
+Step 1: Configure your Python (3.7) + tensorflow 2.5.0 environment, e.g. "conda activate <environment_name>" 
+Step 2: Install the required packages by "pipenv install" and activate it by launching a shell "pipenv shell"
+Step 3: Review the configuration file "config.yml" and run the code by calling command below:
+    python -m src.main -c config.yml
 
-eval "$(ssh-agent -s)"
-ssh-add ~/.ssh/id_rsa_github
+
+#Below is Mark's note, no need to read:
+#conda activate flpaoding
+#cd fl-analysis
+#pipenv shell
+#python -m src.main -c config.yml
+#eval "$(ssh-agent -s)"
+#ssh-add ~/.ssh/id_rsa_github

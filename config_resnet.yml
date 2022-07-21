@@ -7,7 +7,7 @@ environment:
   attacker_full_knowledge: False
   attack_frequency: 0.5
   # attack freq 0.2 means attacking for every 1/0.2=5 rounds
-  prune_frequency: 0.2
+  prune_frequency: 1
   paoding: 1
   pruneconv: 1
 

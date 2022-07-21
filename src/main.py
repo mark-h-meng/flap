@@ -94,8 +94,8 @@ if __name__ == '__main__':
 
     TUNING_PRUNING = False
     RESUME = 0
-    RQ1 = 1
-    RQ2 = 0
+    RQ1 = 0
+    RQ23 = 1
     # Now we perform a series of experiments by adjusting certain settings
     exp_idx = 0
     ## Exp 0. Adjust pruning ferquency and target 
@@ -169,7 +169,7 @@ if __name__ == '__main__':
                         #except:
                         #    print("An exception occurred in experiment no." + str(exp_idx))                   
                 exp_idx += 1
-    elif RQ2:
+    elif RQ23:
         repeat = 5
         for paoding_option in [0,1]:
             config.environment.paoding = paoding_option
@@ -214,7 +214,7 @@ if __name__ == '__main__':
                         #except:
                         #    print("An exception occurred in experiment no." + str(exp_idx))                   
                 exp_idx += 1
-    else:
+    #else:
         repeat = 3
         config.environment.attacker_full_knowledge = True
         for paoding_option in [0,1]:

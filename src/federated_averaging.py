@@ -482,14 +482,19 @@ class FederatedAveraging:
                                         model_type=ModelType.MNIST,
                                         seed_val=42)
 
-                        pruner.load_model()
-                        pruner.prune(evaluator=evaluator)
-                        pruner.save_model(pruned_model_path)
+                        try:
+                            pruner.load_model()
+                            pruner.prune(evaluator=evaluator)
+                            pruner.save_model(pruned_model_path)
+                        except Exception as err:
+                            print("An exception occurred in paoding pruning", err)
+                            pruned_model_path = original_model_path
                         
                         from tensorflow import keras
                         # Here we prune CONV neurons
                         
                         import cnn_prune as pruning_utils
+                        print("Are we going to prune conv layer?", self.config.environment.pruneconv)
                         if self.config.environment.pruneconv and round <= 18:
                             method = 'l1'
                             opt = keras.optimizers.RMSprop(lr=0.0001, decay=1e-6)
@@ -497,6 +502,7 @@ class FederatedAveraging:
                             model_pruned = pruning_utils.prune_model(model, perc=pruning_target, opt=opt, method=method)
                             model_pruned.save(pruned_model_path_final)
                             self.model = keras.models.load_model(pruned_model_path_final)
+                            print("Conv pruning accomplished.")
                         else:    
                             self.model = keras.models.load_model(pruned_model_path)
                         
