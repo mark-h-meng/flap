@@ -50,22 +50,6 @@ dataset:
 The full specification of the supported config options can be found [here](https://pps-lab.com/fl-analysis/)
 Some example config files can be find in `train_configs`.
 
-## Sample usage:
-With a config file `config.yml` ready, the framework can be started by invoking:
-```commandline
-python -m src.main -c config.yml
-```
-
-## Available models
-Some pre-trained models are available in the `models` for experiments and can be included in training using the `environment.load_model` config key.
-- `lenet5_emnist_088.h5` LeNet5 for federated-MNIST at 0.88 accuracy.
-- `lenet5_emnist_097.h5` LeNet5 for federated-MNIST at 0.97 accuracy.
-- `lenet5_emnist_098.h5` LeNet5 for federated-MNIST at 0.98 accuracy.
-- `resnet18.h5` ResNet18 for CIFAR-10 at 0.88 accuracy.
-- `resnet18_080.h5` ResNet18 for CIFAR-10 at 0.80 accuracy.
-- `resnet18_082.h5` ResNet18 for CIFAR-10 at 0.82 accuracy.
-- `resnet156_082.h5` ResNet56 for CIFAR-10 at 0.86 accuracy.
-
 
 ## Output 
 Basic training progress is sent to standard output.
@@ -82,12 +66,6 @@ tensorboard --logdir ./experiments/{experiment_name}
 
 This project's code is distributed under the MIT License. See `LICENSE` for more information.
 
-
-<!-- CONTACT -->
-## Contact
-
-* Hidde Lycklama - [hiddely](https://github.com/hiddely)
-* Lukas Burkhalter - [lubux](https://github.com/lubux)
 
 ## Project Links: 
 * [https://github.com/pps-lab/fl-analysis](https://github.com/pps-lab/fl-analysis)
