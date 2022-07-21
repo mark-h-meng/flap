@@ -1,84 +1,18 @@
-<!-- PROJECT LOGO -->
-<br />
-<p align="center">
-  <a href="https://pps-lab.com/research/ml-sec/">
-    <img src="https://github.com/pps-lab/fl-analysis/blob/master/documentation/ml-sec-square.png?raw=true" alt="Logo" width="80" height="80">  
-  </a>
+## Set up the execution
 
-  <h2 align="center">Federated Learning with Adversaries</h2>
+Step 1: Configure your Python (3.7) + tensorflow 2.5.0 environment
+```commandline
+conda activate <environment_name>
+``` 
 
-[comment]: <> (  <h3 align="center">Framework for to analyse FL with ad</h3> )
-</p>
-
-<!-- TABLE OF CONTENTS -->
-<details open="open"> 
-  <summary>Table of Contents</summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#backdoor-attacks">Backdoor attacks</a></li>
-        <li><a href="#robustness">Robustness</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Requirements</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-  </ol>
-</details>
-
-## About the Project
-This framework can be used to simulate and analyse a federated learning setting in which some clients are compromised by an adversary.
-The adversary attempts to compromise the integrity of the shared global model by sending malicious updates to the server.
-
-The framework was used to perform the analysis of federated learning robustness under a norm bound defense as part
-of [RoFL: Attestable Robustness for Secure Federated Learning](https://arxiv.org/abs/2107.03311).
-A research implementation of the secure federated learning with constraints framework can be found [here](https://github.com/pps-lab/rofl-project-code).
-
-### Backdoor attacks
-In federated learning, adversaries can perform backdoor attacks to poison the global model.
-This framework implements existing attack strategies such as [model replacement](https://arxiv.org/abs/1807.00459), 
-on a wide variety of tasks and backdoor attack targets proposed in previous work, such as
-attacks on [prototypical targets](https://research.google/pubs/pub48698/) or [edge cases](https://arxiv.org/abs/2007.05084).
-
-### Robustness
-The framework provides several tools to analyse client updates, measure backdoor performance and deploy defenses to
-gain insight on model robustness in federated learning. 
-
-<!-- GETTING STARTED -->
-## Getting Started
-
-We now describe how to set up this framework.
-
-### Requirements
-The dependencies can be automatically installed through `pipenv`.
-The high-level requirements are as follows.
-- Python 3 (tested on version 3.7)
-- [TensorFlow](https://www.tensorflow.org/) (version 2.0)
-
-Before starting, ensure that you have `pipenv` installed:
-
-```sh
-pip install pipenv
+Step 2: Install the required packages by "pipenv install" and activate it by launching a shell 
+```commandline
+pipenv shell
 ```
 
-### Installation
-
-1. Clone the repo
-```sh
-git clone https://github.com/pps-lab/fl-analysis.git
-```
-
-2. Install the Python packages
-```sh
-pipenv install
+Step 3: Review the configuration file "config.yml" and run the code by calling command below:
+```commandline
+python -m src.main -c config.yml
 ```
 
 ## Usage
