@@ -1,6 +1,7 @@
 from copy import deepcopy
 
 import numpy as np
+import math
 import logging
 
 class Aggregator:
@@ -84,6 +85,114 @@ class TrimmedMean(Aggregator):
 
         return new_weights
 
+class Median(Aggregator):
+
+    def __init__(self, lr):
+        self.lr = lr
+
+    def aggregate(self, global_weights, client_weight_list):
+        logging.info("Median is selected")
+        
+        median_index = math.ceil(len(client_weight_list)/2) -1
+        assert len(client_weight_list) - (median_index) >= 0, "Median index is wrongly calculated!"
+
+        current_weights = global_weights
+        new_weights = deepcopy(current_weights)
+
+        # sort by parameter
+        accumulator = [np.zeros([*layer.shape, len(client_weight_list)], layer.dtype) for layer in new_weights]
+        for client in range(0, len(client_weight_list)):
+            for layer in range(len(client_weight_list[client])):
+                accumulator[layer][..., client] = client_weight_list[client][layer] - current_weights[layer]
+
+        for layer in range(len(accumulator)):
+            accumulator[layer] = np.sort(accumulator[layer], -1)
+            accumulator[layer] = accumulator[layer][..., median_index:median_index+1]
+            
+            new_weights[layer] = new_weights[layer] + \
+                                 self.lr * np.mean(accumulator[layer], -1) * \
+                                 len(client_weight_list) # Multiply by list of clients
+
+        return new_weights
+
+class Krum(Aggregator):
+
+    def __init__(self, byz, lr):
+        """
+
+        :type byz: float fraction of byzantine workers to tolerant
+        """
+        self.byz = byz
+        self.lr = lr
+
+        assert 0 < self.byz < 2/3, "Byz must be between zero and 2/3!"
+
+    def aggregate(self, global_weights, client_weight_list):
+        logging.info("Krum is selected, byz = "+str(self.byz))
+        num_workers = len(client_weight_list)
+        # byz specifies the upper bound of the estimated percentage of malicious workers
+        num_byzworkers = int(self.byz * num_workers)
+        num_selected = max(num_workers - num_byzworkers - 2, 1)
+        
+        current_weights = global_weights
+        new_weights = deepcopy(current_weights)
+
+        gradients = deepcopy(client_weight_list)
+        
+        for client in range(len(client_weight_list)):
+            client_grad = []
+            #print("Calculating gradient for client " + str(client) + " :", end="")
+            for layer in range(len(client_weight_list[client])):
+                #print(str(layer) + " ", end="")
+                grad = client_weight_list[client][layer] - current_weights[layer]
+                grad /= float(num_selected)
+                client_grad.append(grad)
+                #print("size of client_grad[-1]:", np.shape(client_grad[-1]))
+            #print("")
+            gradients[client] = client_grad
+        #print("size of gradients:", np.shape(gradients))
+        
+        # Compute list of scores
+        scores = [list() for i in range(num_workers)]
+        for i in range(num_workers):
+            #score = scores[i]
+            for j in range(i + 1, num_workers):
+                distance = 0
+                diff = np.array(gradients[i]) - np.array(gradients[j])
+                for layer in range(len(diff)): 
+                    distance += np.linalg.norm(diff[layer])
+                if math.isnan(distance):
+                    distance = math.inf
+                #print("[i]",i,"[j]",j,"dist.",distance)
+                #score.append(distance)
+                scores[j].append(distance)
+                scores[i].append(distance)
+
+        sum_scores = [list() for i in range(num_workers)]
+        
+        for i in range(num_workers):
+            score = scores[i]
+            score.sort()
+            sum_scores[i] = sum(score[:num_selected])
+        # Return the average of the m gradients with the smallest score
+        pairs = [(gradients[i], sum_scores[i]) for i in range(num_workers)]
+        pairs.sort(key=lambda pair: pair[1])
+        #print(pairs)
+        result = pairs[0][0]
+        #print("result >>", len(result), len(result[0]))
+        for i in range(1, num_selected):
+            #result += pairs[i][0]
+            result = np.add(result, pairs[i][0])
+            #print("result >>", len(result), len(result[0]))
+        
+        #print("num_selected >>", num_selected)
+        #print("result >>", len(result), len(result[0]))
+        for layer in range(len(result)):   
+            #print("processing layer", layer)         
+            new_weights[layer] = new_weights[layer] + \
+                                 self.lr * np.array(result[layer], dtype=float)* \
+                                 len(client_weight_list) 
+        return new_weights
 
 def build_aggregator(config):
     aggregator = config.server.aggregator

@@ -255,7 +255,7 @@ class Client:
             new_weights_opposite_direction = [np.sign(layer) * -clip_value for layer in next_update]
 
             return new_weights_opposite_direction
-        elif aggregation == "TrimmedMean":
+        elif aggregation == "TrimmedMean" or aggregation == "Median" or aggregation == "Krum":
             constant_b = 2.0
 
             accumulator = [np.zeros([*layer.shape, len(self.benign_updates_this_round)], layer.dtype)

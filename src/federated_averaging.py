@@ -446,7 +446,7 @@ class FederatedAveraging:
 
                     ### [MARK] DO PRUNING (ON EACH ACTIVE CLIENT) HERE IF WE WANT IT TO BE DONE PRIOR TO THE AGGREGATION
                     
-                    if pruning == 1 and round > 0 and round % (1 / self.prune_frequency) == 0 == 0:
+                    if pruning == 1 and round > 0 and round % (1 / self.prune_frequency) == 0:
                     
                         pruning_params = (0.75, 0.25)
                         
@@ -681,29 +681,32 @@ class FederatedAveraging:
             #print(" >>> Amount images is max of attack_config.augment_times", attack_config.augment_times, " and self.global_dataset.x_aux_test.shape[0]", self.global_dataset.x_aux_test.shape[0])
             batch_size = min(self.global_dataset.x_aux_test.shape[0], self.config.client.benign_training.batch_size)
             #print(" >>> Batch size is min of self.global_dataset.x_aux_test.shape[0]", self.global_dataset.x_aux_test.shape[0], "and self.config.client.benign_training.batch_size", self.config.client.benign_training.batch_size)
-            total_batches = int(amount_images / batch_size) # handle case ?
-            #print(" >>> Total batch is", total_batches)
-            for batch_x, batch_y in self.global_dataset.get_aux_generator(self.config.client.benign_training.batch_size,
-                                                                          attack_config.augment_times,
-                                                                          attack_config.augment_data,
-                                                                          attack_config.type,
-                                                                          attack_config.max_test_batches):
-                # Here we want to know if given batch_x, whether the global model will predict it as batch_y (malicious label).
-                preds = self.model(batch_x, training=False).numpy().argmax(axis=1)
-                pred_inds = preds == batch_y
-                if self.config.environment.print_backdoor_eval:
-                    logging.info(f"Backdoor predictions: {preds}")
-                # print("Backdoor predictions:", preds, "vs", batch_y)
+            if batch_size <= 0:
+                adv_success = 0
+            else:
+                total_batches = int(amount_images / batch_size) # handle case ?
+                #print(" >>> Total batch is", total_batches)
+                for batch_x, batch_y in self.global_dataset.get_aux_generator(self.config.client.benign_training.batch_size,
+                                                                            attack_config.augment_times,
+                                                                            attack_config.augment_data,
+                                                                            attack_config.type,
+                                                                            attack_config.max_test_batches):
+                    # Here we want to know if given batch_x, whether the global model will predict it as batch_y (malicious label).
+                    preds = self.model(batch_x, training=False).numpy().argmax(axis=1)
+                    pred_inds = preds == batch_y
+                    if self.config.environment.print_backdoor_eval:
+                        logging.info(f"Backdoor predictions: {preds}")
+                    # print("Backdoor predictions:", preds, "vs", batch_y)
 
-                # This may break on large test sets
-                # adv_success = np.mean(pred_inds)
-                all_adv_success.append(pred_inds)
-                batches += 1
-                # print(" >>>>> Evaluate adv batch", batches, "- succ rate", np.mean(pred_inds), "among", len(preds), "samples")
-                if batches > total_batches:
-                    break # manually
+                    # This may break on large test sets
+                    # adv_success = np.mean(pred_inds)
+                    all_adv_success.append(pred_inds)
+                    batches += 1
+                    # print(" >>>>> Evaluate adv batch", batches, "- succ rate", np.mean(pred_inds), "among", len(preds), "samples")
+                    if batches > total_batches:
+                        break # manually
 
-            adv_success = np.mean(np.concatenate(all_adv_success))
+                adv_success = np.mean(np.concatenate(all_adv_success))
         else:
             raise Exception('Type not supported')
 

@@ -1,2 +1,2 @@
 
-from .aggregators import FedAvg, TrimmedMean, Aggregator
+from .aggregators import FedAvg, TrimmedMean, Aggregator, Median, Krum

@@ -39,6 +39,91 @@ class Model:
                 # tf.keras.layers.Dropout(0.5),
                 tf.keras.layers.Dense(10, activation='softmax')
             ])
+        elif model_name == 'vgg-cifar':
+            regularizer = l2(regularization_rate) if regularization_rate is not None else None
+            model = tf.keras.Sequential()
+
+            model.add(tf.keras.layers.Conv2D(64, (3, 3), padding='same',
+                            input_shape=[32,32,3], kernel_regularizer=regularizer))
+            model.add(tf.keras.layers.Activation('relu'))
+            model.add(tf.keras.layers.BatchNormalization())
+            model.add(tf.keras.layers.Dropout(0.3))
+
+            model.add(tf.keras.layers.Conv2D(64, (3, 3), padding='same',kernel_regularizer=regularizer))
+            model.add(tf.keras.layers.Activation('relu'))
+            model.add(tf.keras.layers.BatchNormalization())
+
+            model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
+
+            model.add(tf.keras.layers.Conv2D(128, (3, 3), padding='same',kernel_regularizer=regularizer))
+            model.add(tf.keras.layers.Activation('relu'))
+            model.add(tf.keras.layers.BatchNormalization())
+            model.add(tf.keras.layers.Dropout(0.4))
+
+            model.add(tf.keras.layers.Conv2D(128, (3, 3), padding='same',kernel_regularizer=regularizer))
+            model.add(tf.keras.layers.Activation('relu'))
+            model.add(tf.keras.layers.BatchNormalization())
+
+            model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
+
+            model.add(tf.keras.layers.Conv2D(256, (3, 3), padding='same',kernel_regularizer=regularizer))
+            model.add(tf.keras.layers.Activation('relu'))
+            model.add(tf.keras.layers.BatchNormalization())
+            model.add(tf.keras.layers.Dropout(0.4))
+
+            model.add(tf.keras.layers.Conv2D(256, (3, 3), padding='same',kernel_regularizer=regularizer))
+            model.add(tf.keras.layers.Activation('relu'))
+            model.add(tf.keras.layers.BatchNormalization())
+            model.add(tf.keras.layers.Dropout(0.4))
+
+            model.add(tf.keras.layers.Conv2D(256, (3, 3), padding='same',kernel_regularizer=regularizer))
+            model.add(tf.keras.layers.Activation('relu'))
+            model.add(tf.keras.layers.BatchNormalization())
+
+            model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
+
+            model.add(tf.keras.layers.Conv2D(512, (3, 3), padding='same',kernel_regularizer=regularizer))
+            model.add(tf.keras.layers.Activation('relu'))
+            model.add(tf.keras.layers.BatchNormalization())
+            model.add(tf.keras.layers.Dropout(0.4))
+
+            model.add(tf.keras.layers.Conv2D(512, (3, 3), padding='same',kernel_regularizer=regularizer))
+            model.add(tf.keras.layers.Activation('relu'))
+            model.add(tf.keras.layers.BatchNormalization())
+            model.add(tf.keras.layers.Dropout(0.4))
+
+            model.add(tf.keras.layers.Conv2D(512, (3, 3), padding='same',kernel_regularizer=regularizer))
+            model.add(tf.keras.layers.Activation('relu'))
+            model.add(tf.keras.layers.BatchNormalization())
+
+            model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
+
+            model.add(tf.keras.layers.Conv2D(512, (3, 3), padding='same',kernel_regularizer=regularizer))
+            model.add(tf.keras.layers.Activation('relu'))
+            model.add(tf.keras.layers.BatchNormalization())
+            model.add(tf.keras.layers.Dropout(0.4))
+
+            model.add(tf.keras.layers.Conv2D(512, (3, 3), padding='same',kernel_regularizer=regularizer))
+            model.add(tf.keras.layers.Activation('relu'))
+            model.add(tf.keras.layers.BatchNormalization())
+            model.add(tf.keras.layers.Dropout(0.4))
+
+            model.add(tf.keras.layers.Conv2D(512, (3, 3), padding='same',kernel_regularizer=regularizer))
+            model.add(tf.keras.layers.Activation('relu'))
+            model.add(tf.keras.layers.BatchNormalization())
+
+            model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
+            model.add(tf.keras.layers.Dropout(0.5))
+
+            model.add(tf.keras.layers.Flatten())
+            model.add(tf.keras.layers.Dense(512,kernel_regularizer=regularizer))
+            model.add(tf.keras.layers.Activation('relu'))
+            model.add(tf.keras.layers.BatchNormalization())
+
+            model.add(tf.keras.layers.Dropout(0.5))
+            model.add(tf.keras.layers.Dense(10))
+            model.add(tf.keras.layers.Activation('softmax'))
+
         elif model_name == 'dev':
             regularizer = l2(regularization_rate) if regularization_rate is not None else None
 
@@ -50,10 +135,18 @@ class Model:
                 tf.keras.layers.Dense(32, activation='relu', kernel_regularizer=regularizer, bias_regularizer=regularizer),
                 tf.keras.layers.Dense(10, activation='softmax'),
             ])
-        elif model_name == 'fc': # Meier et al. ICDAR 2011
-            model = tf.keras.Sequential([
+        elif model_name == 'fc': 
+            #model = tf.keras.Sequential([ # LeCun et al. 1998
+            #    tf.keras.layers.Flatten(input_shape=(28,28,1)),
+            #    tf.keras.layers.Dense(500, activation='relu'),
+            #    tf.keras.layers.Dense(150, activation='relu'),
+            #    tf.keras.layers.Dense(10, activation='softmax'),
+            #])
+            model = tf.keras.Sequential([ # the model used in Paoding
                 tf.keras.layers.Flatten(input_shape=(28,28,1)),
-                tf.keras.layers.Dense(800, activation='relu'),
+                tf.keras.layers.Dense(128, activation='relu'),
+                tf.keras.layers.Dense(128, activation='relu'),
+                tf.keras.layers.Dense(64, activation='relu'),
                 tf.keras.layers.Dense(10, activation='softmax'),
             ])
         elif model_name == 'bhagoji':
