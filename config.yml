@@ -5,6 +5,7 @@ environment:
   num_malicious_clients: 9
   experiment_name: "backdoor_tasks"
   attacker_full_knowledge: False
+  attacker_full_dataset: False
   attack_frequency: 0.5
   # attack freq 0.2 means attacking for every 1/0.2=5 rounds
   prune_frequency: 0.2
@@ -32,7 +33,7 @@ client:
     num_epochs: 2
     batch_size: 24
     optimizer: Adam
-    learning_rate: 0.001
+    learning_rate: 0.01
   malicious:
     objective:
       name: TargetedAttack
@@ -59,5 +60,5 @@ client:
 
 dataset:
   dataset: cifar10
-  # dataset: femnist
+  #dataset: femnist
   data_distribution: nonIID

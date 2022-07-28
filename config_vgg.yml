@@ -1,6 +1,6 @@
 environment:
   seed: 42
-  num_clients: 3383
+  num_clients: 50
   num_selected_clients: 30
   num_malicious_clients: 9
   experiment_name: "backdoor_tasks"

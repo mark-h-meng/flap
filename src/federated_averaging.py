@@ -101,6 +101,7 @@ class FederatedAveraging:
 
         self.aggregator = aggregators.build_aggregator(config)
         self.attacker_full_knowledge = config.environment.attacker_full_knowledge
+        self.attacker_full_dataset = config.environment.attacker_full_dataset
 
     def _init_log_directories(self):
         """Initializes directories in which log files are stored"""
@@ -360,7 +361,8 @@ class FederatedAveraging:
                         ### [MARK] Insert those malicious clients into all active clients for the current round, depends on attack frequency
                         if round % (1 / self.attack_frequency) == 0:
                             
-                            logging.info("FULL knowledge?"+ str(self.attacker_full_knowledge))
+                            logging.info("Attackers have FULL knowledge?"+ str(self.attacker_full_knowledge))
+                            logging.info("Attackers have FULL dataset access?"+ str(self.attacker_full_dataset))
                             num_malicious_selected = self.config.environment.num_selected_malicious_clients or self.num_malicious_clients
                             honest = indexes[indexes[:, 1] == False][:self.num_selected_clients - num_malicious_selected, 0]
                             malicious = indexes[indexes[:, 1] == True][0:num_malicious_selected][:, 0]
@@ -450,7 +452,7 @@ class FederatedAveraging:
                     
                         pruning_params = (0.75, 0.25)
                         
-                        pruning_target, pruning_step = pruning_settings
+                        pruning_target, pruning_step, pruning_evaluation_type = pruning_settings
 
                         print(">>>>>> HERE we simulate the pruning process, the global weight is in ", type(weights), "type and in ", len(weights), "size.")
                         
@@ -472,14 +474,19 @@ class FederatedAveraging:
                         sampler = Sampler()
                         sampler.set_strategy(mode=SamplingMode.STOCHASTIC, params=pruning_params)  
                         #sampler.set_strategy(mode=SamplingMode.SCALE_ONLY, params=None)   
-                        evaluator = None
+                        evaluator = Evaluator()
+
+                        model_type=ModelType.MNIST
+                        if pruning_evaluation_type == 'cifar':
+                            model_type=ModelType.CIFAR
 
                         pruner = Pruner(original_model_path, 
                                         ([], []), 
                                         target=pruning_target,
                                         step=pruning_step,
-                                        sample_strategy=sampler, 
-                                        model_type=ModelType.MNIST,
+                                        sample_strategy=sampler,
+                                        # evaluator= evaluator,
+                                        model_type=model_type,
                                         seed_val=42)
 
                         try:
@@ -495,7 +502,7 @@ class FederatedAveraging:
                         
                         import cnn_prune as pruning_utils
                         print("Are we going to prune conv layer?", self.config.environment.pruneconv)
-                        if self.config.environment.pruneconv and round <= 18:
+                        if self.config.environment.pruneconv and round <= 25:
                             method = 'l1'
                             opt = keras.optimizers.RMSprop(lr=0.0001, decay=1e-6)
                             model = keras.models.load_model(pruned_model_path)

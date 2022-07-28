@@ -88,19 +88,23 @@ if __name__ == '__main__':
     #config.environment.pruneconv = 0
     config.environment.prune_frequency = 0.2
     
+    pruning_evaluation_type = 'mnist'
+    if config.dataset.dataset=='cifar10':
+        pruning_evaluation_type = 'cifar'
     pruning_target = 0.01
     pruning_step = 0.01
-    pruning_settings = (pruning_target, pruning_step)
+    pruning_settings = (pruning_target, pruning_step, pruning_evaluation_type)
 
     TUNING_PRUNING = False
     RESUME = 0
-    RQ1 = 1
-    RQ23 = 1
+    DEFAULT_REPEAT = 4
+    RQ1 = 0
+    RQ2 = 1
+    RQ3 = 1
     # Now we perform a series of experiments by adjusting certain settings
     exp_idx = 0
     ## Exp 0. Adjust pruning ferquency and target 
     if TUNING_PRUNING:
-        repeat = 2
         for prune_freq in [1]:
             config.environment.prune_frequency = prune_freq
             for target in [0.01, 0.02, 0.05, 0.1, 0.25, 0.5]:
@@ -110,12 +114,14 @@ if __name__ == '__main__':
                     pruning_step = 0.02
                 pruning_settings = (target, pruning_step)
                 curr_exp_settings = []
+                curr_exp_settings.append(config.dataset.dataset)
                 curr_exp_settings.append(str(prune_freq)+"-pfreq")
                 curr_exp_settings.append(str(target)+"-ptarg")
                 curr_exp_settings.append('paoding')
                 if exp_idx >= RESUME:
-                    for i in range(0, repeat):
+                    for i in range(0, DEFAULT_REPEAT):
                         log_filename = generate_logfile_name(curr_exp_settings)
+                        main(config, pruning_settings, log_filename)                        
                         try:
                             print("Experiment no." + str(exp_idx) + " started.") 
                             main(config, pruning_settings, log_filename)
@@ -124,14 +130,15 @@ if __name__ == '__main__':
                 else:
                     print("Experiment no." + str(exp_idx) + " skipped.")                    
                 exp_idx += 1
-    elif RQ1:
-        repeat = 2
+    if RQ1:
         ## Exp 1. Adjust attack frequency
-        for attack_freq in [0.1,0.2,0.5,1]:
+        #for attack_freq in [0.001,0.1,0.2,0.5,1]:
+        for attack_freq in [0.5,1]:
             config.environment.attack_frequency = attack_freq
             for paoding_option in [0,1]:
                 config.environment.paoding = paoding_option
                 curr_exp_settings = []
+                curr_exp_settings.append(config.dataset.dataset)
                 curr_exp_settings.append(str(attack_freq))
                 if paoding_option == 1:
                     curr_exp_settings.append('paoding')
@@ -139,7 +146,7 @@ if __name__ == '__main__':
                     print("Experiment no." + str(exp_idx) + " skipped.")                    
                 else:
                     log_filename = generate_logfile_name(curr_exp_settings)
-                    for i in range(0, repeat):
+                    for i in range(0, DEFAULT_REPEAT):
                         try:
                             print("Experiment no." + str(exp_idx) + " started.") 
                             main(config, pruning_settings, log_filename)
@@ -154,6 +161,7 @@ if __name__ == '__main__':
             for paoding_option in [0,1]:
                 config.environment.paoding = paoding_option
                 curr_exp_settings = []
+                curr_exp_settings.append(config.dataset.dataset)
                 curr_exp_settings.append(str(num_malicious)+"-attcker")
                 if paoding_option == 1:
                     curr_exp_settings.append('paoding')
@@ -162,18 +170,18 @@ if __name__ == '__main__':
                     print("Experiment no." + str(exp_idx) + " skipped.")
                 else:
                     log_filename = generate_logfile_name(curr_exp_settings)
-                    for i in range(0, repeat):
-                        #try:
-                        #    print("Experiment no." + str(exp_idx) + " started.") 
-                        main(config, pruning_settings, log_filename)
-                        #except:
-                        #    print("An exception occurred in experiment no." + str(exp_idx))                   
+                    for i in range(0, DEFAULT_REPEAT):
+                        try:
+                            print("Experiment no." + str(exp_idx) + " started.") 
+                            main(config, pruning_settings, log_filename)
+                        except:
+                            print("An exception occurred in experiment no." + str(exp_idx))                   
                 exp_idx += 1
-    elif RQ23:
-        repeat = 3
+    if RQ2:
         for paoding_option in [0,1]:
             config.environment.paoding = paoding_option
             curr_exp_settings = []
+            curr_exp_settings.append(config.dataset.dataset)
             curr_exp_settings.append("FedAvg")
             if paoding_option == 1:
                 curr_exp_settings.append('paoding')
@@ -182,12 +190,12 @@ if __name__ == '__main__':
                 print("Experiment no." + str(exp_idx) + " skipped.")
             else:
                 log_filename = generate_logfile_name(curr_exp_settings)
-                for i in range(0, repeat):
-                    #try:
-                    #    print("Experiment no." + str(exp_idx) + " started.") 
-                    main(config, pruning_settings, log_filename)
-                    #except:
-                    #    print("An exception occurred in experiment no." + str(exp_idx))                   
+                for i in range(0, DEFAULT_REPEAT):
+                    try:
+                        print("Experiment no." + str(exp_idx) + " started.") 
+                        main(config, pruning_settings, log_filename)
+                    except:
+                        print("An exception occurred in experiment no." + str(exp_idx))                   
             exp_idx += 1
         
         for tm_beta in [0.1, 0.4]:
@@ -196,6 +204,7 @@ if __name__ == '__main__':
             for paoding_option in [0,1]:
                 config.environment.paoding = paoding_option
                 curr_exp_settings = []
+                curr_exp_settings.append(config.dataset.dataset)
                 if tm_beta > 0.25:
                     curr_exp_settings.append("TrimMean-Radi")
                 else:
@@ -207,47 +216,50 @@ if __name__ == '__main__':
                     print("Experiment no." + str(exp_idx) + " skipped.")
                 else:
                     log_filename = generate_logfile_name(curr_exp_settings)
-                    for i in range(0, repeat):
-                        #try:
-                        #    print("Experiment no." + str(exp_idx) + " started.") 
-                        main(config, pruning_settings, log_filename)
-                        #except:
-                        #    print("An exception occurred in experiment no." + str(exp_idx))                   
+                    for i in range(0, DEFAULT_REPEAT):
+                        try:
+                            print("Experiment no." + str(exp_idx) + " started.") 
+                            main(config, pruning_settings, log_filename)
+                        except:
+                            print("An exception occurred in experiment no." + str(exp_idx))                   
                 exp_idx += 1
-    #else:
-        repeat = 3
-        config.environment.attacker_full_knowledge = True
+
+        config.server.aggregator['name'] = 'Krum'
+        config.server.aggregator['args'].pop('beta', None)
+        config.server.aggregator['args']['byz']=0.33
         for paoding_option in [0,1]:
             config.environment.paoding = paoding_option
             curr_exp_settings = []
-            curr_exp_settings.append("FK")
-            curr_exp_settings.append("FedAvg")
+            curr_exp_settings.append(config.dataset.dataset)
+            curr_exp_settings.append("Krum")
             if paoding_option == 1:
                 curr_exp_settings.append('paoding')
-                
+                    
             if exp_idx < RESUME:
                 print("Experiment no." + str(exp_idx) + " skipped.")
             else:
                 log_filename = generate_logfile_name(curr_exp_settings)
-                for i in range(0, repeat):
-                    #try:
-                    #    print("Experiment no." + str(exp_idx) + " started.") 
-                    main(config, pruning_settings, log_filename)
-                    #except:
-                    #    print("An exception occurred in experiment no." + str(exp_idx))                   
-            exp_idx += 1
-        
-        for tm_beta in [0.1, 0.4]:
-            config.server.aggregator['name'] = 'TrimmedMean'
-            config.server.aggregator['args']['beta']=tm_beta
-            for paoding_option in [1]:
+                for i in range(0, DEFAULT_REPEAT):
+                    try:
+                        print("Experiment no." + str(exp_idx) + " started.") 
+                        main(config, pruning_settings, log_filename)
+                    except:
+                        print("An exception occurred in experiment no." + str(exp_idx))                   
+            exp_idx += 1        
+    if RQ3:
+        config.environment.attacker_full_knowledge = True
+        for attacker_full_dataset in [False,True]:
+            config.environment.attacker_full_dataset = attacker_full_dataset
+            
+            for paoding_option in [0,1]:
                 config.environment.paoding = paoding_option
                 curr_exp_settings = []
-                curr_exp_settings.append("FK")
-                if tm_beta > 0.25:
-                    curr_exp_settings.append("TrimMean-Radi")
+                curr_exp_settings.append(config.dataset.dataset)
+                if attacker_full_dataset:
+                    curr_exp_settings.append("FullKn")
                 else:
-                    curr_exp_settings.append("TrimMean-Cons")
+                    curr_exp_settings.append("PartialKn")
+                curr_exp_settings.append("FedAvg")
                 if paoding_option == 1:
                     curr_exp_settings.append('paoding')
                     
@@ -255,10 +267,66 @@ if __name__ == '__main__':
                     print("Experiment no." + str(exp_idx) + " skipped.")
                 else:
                     log_filename = generate_logfile_name(curr_exp_settings)
-                    for i in range(0, repeat):
-                        #try:
-                        #    print("Experiment no." + str(exp_idx) + " started.") 
-                        main(config, pruning_settings, log_filename)
-                        #except:
-                        #    print("An exception occurred in experiment no." + str(exp_idx))                   
+                    for i in range(0, DEFAULT_REPEAT):
+                        try:
+                            print("Experiment no." + str(exp_idx) + " started.") 
+                            main(config, pruning_settings, log_filename)
+                        except:
+                            print("An exception occurred in experiment no." + str(exp_idx))                   
                 exp_idx += 1
+            
+            for tm_beta in [0.1, 0.4]:
+                config.server.aggregator['name'] = 'TrimmedMean'
+                config.server.aggregator['args']['beta']=tm_beta
+                for paoding_option in [0,1]:
+                    config.environment.paoding = paoding_option
+                    curr_exp_settings = []
+                    curr_exp_settings.append(config.dataset.dataset)
+                    curr_exp_settings.append("FK")
+                    if tm_beta > 0.25:
+                        curr_exp_settings.append("TrimMean-Radi")
+                    else:
+                        curr_exp_settings.append("TrimMean-Cons")
+                    if paoding_option == 1:
+                        curr_exp_settings.append('paoding')
+                        
+                    if exp_idx < RESUME:
+                        print("Experiment no." + str(exp_idx) + " skipped.")
+                    else:
+                        log_filename = generate_logfile_name(curr_exp_settings)
+                        for i in range(0, DEFAULT_REPEAT):
+                            try:
+                                print("Experiment no." + str(exp_idx) + " started.") 
+                                main(config, pruning_settings, log_filename)
+                            except:
+                                print("An exception occurred in experiment no." + str(exp_idx))                   
+                    exp_idx += 1
+            
+            config.server.aggregator['args'].pop('beta', None)
+            
+            config.server.aggregator['name'] = 'Krum'
+            config.server.aggregator['args']['byz']=0.33
+            for paoding_option in [0,1]:
+                config.environment.paoding = paoding_option
+                curr_exp_settings = []
+                curr_exp_settings.append(config.dataset.dataset)
+                if attacker_full_dataset:
+                    curr_exp_settings.append("FullKn")
+                else:
+                    curr_exp_settings.append("PartialKn")
+                curr_exp_settings.append("Krum")
+                if paoding_option == 1:
+                    curr_exp_settings.append('paoding')
+                    
+                if exp_idx < RESUME:
+                    print("Experiment no." + str(exp_idx) + " skipped.")
+                else:
+                    log_filename = generate_logfile_name(curr_exp_settings)
+                    for i in range(0, DEFAULT_REPEAT):
+                        try:
+                            print("Experiment no." + str(exp_idx) + " started.") 
+                            main(config, pruning_settings, log_filename)
+                        except:
+                            print("An exception occurred in experiment no." + str(exp_idx))                   
+                exp_idx += 1
+            
