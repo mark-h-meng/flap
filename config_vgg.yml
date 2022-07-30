@@ -3,7 +3,7 @@ environment:
   num_clients: 50
   num_selected_clients: 30
   num_malicious_clients: 9
-  experiment_name: "backdoor_tasks"
+  experiment_name: "targeted"
   attacker_full_knowledge: False
   attack_frequency: 0.5
   # attack freq 0.2 means attacking for every 1/0.2=5 rounds

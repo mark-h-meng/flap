@@ -77,12 +77,14 @@ if __name__ == '__main__':
     tf.random.set_seed(config.environment.seed)
     # Now let double confirm the default configurations
 
+    DEFAULT_NUM_MAL_WORKDERS = 9
+
     config.server.aggregator['name'] = 'FedAvg'
     config.server.aggregator['args'] = {}
     
     config.environment.attacker_full_knowledge = False
     config.server.num_rounds = 25
-    config.environment.num_malicious_clients = 3 # 30% OUT OF 30 CLIENTS
+    config.environment.num_malicious_clients = DEFAULT_NUM_MAL_WORKDERS # 30% OUT OF 30 CLIENTS
     config.environment.attack_frequency = 0.5
     config.environment.paoding = 1
     config.environment.prune_frequency = 0.2
@@ -97,9 +99,10 @@ if __name__ == '__main__':
     TUNING_PRUNING = False
     RESUME = 0
     DEFAULT_REPEAT = 1
-    RQ1 = 1
-    RQ2 = 0
-    RQ3 = 0
+    BASE_SETTINGS = 0
+    RQ1 = 0
+    RQ2 = 1
+    RQ3 = 1
     # Now we perform a series of experiments by adjusting certain settings
     exp_idx = 0
     ## Exp 0. Adjust pruning ferquency and target 
@@ -134,16 +137,40 @@ if __name__ == '__main__':
         pruning_target = 0.01
         pruning_step = 0.01
         pruning_settings = (pruning_target, pruning_step, pruning_evaluation_type)
-
+    
+    if BASE_SETTINGS:
+        config.environment.attacker_full_knowledge = False
+        config.server.num_rounds = 25
+        config.environment.num_malicious_clients = DEFAULT_NUM_MAL_WORKDERS # 30% OUT OF 30 CLIENTS
+        config.environment.attack_frequency = 0.5
+        config.environment.prune_frequency = 0.2
+        
+        for paoding_option in [1]:
+            config.environment.paoding = paoding_option
+            curr_exp_settings = []
+            curr_exp_settings.append(config.dataset.dataset)
+            
+            curr_exp_settings.append('BASIC')
+            if paoding_option == 1:
+                curr_exp_settings.append('paoding')
+            elif paoding_option == 2:
+                curr_exp_settings.append('adaptive')
+            if exp_idx < RESUME:
+                print("Experiment no." + str(exp_idx) + " skipped.")                    
+            else:
+                log_filename = generate_logfile_name(curr_exp_settings)
+                for i in range(0, DEFAULT_REPEAT):
+                    main(config, pruning_settings, log_filename)
+            exp_idx += 1
     if RQ1:
         config.environment.attacker_full_knowledge = False
         config.server.num_rounds = 25
-        config.environment.num_malicious_clients = 3 # 30% OUT OF 30 CLIENTS
+        config.environment.num_malicious_clients = DEFAULT_NUM_MAL_WORKDERS # 30% OUT OF 30 CLIENTS
         config.environment.attack_frequency = 0.5
         config.environment.prune_frequency = 0.2
         
         ## Exp 1. Adjust attack frequency
-        for attack_freq in [1, 0.5, 0.2, 0.1, 0.001]:
+        for attack_freq in [1, 0.2, 0.1, 0.001]: 
         #for attack_freq in [0.5,1]:
             config.environment.attack_frequency = attack_freq
             for paoding_option in [0,1]:
@@ -154,28 +181,30 @@ if __name__ == '__main__':
                 curr_exp_settings.append(str(attack_freq))
                 if paoding_option == 1:
                     curr_exp_settings.append('paoding')
+                elif paoding_option == 2:
+                    curr_exp_settings.append('adaptive')
                 if exp_idx < RESUME:
                     print("Experiment no." + str(exp_idx) + " skipped.")                    
                 else:
                     log_filename = generate_logfile_name(curr_exp_settings)
                     for i in range(0, DEFAULT_REPEAT):
-                        #try:
-                        #    print("Experiment no." + str(exp_idx) + " started.") 
-                        main(config, pruning_settings, log_filename)
-                        #except:
-                        #    print("An exception occurred in experiment no." + str(exp_idx))
+                        try:
+                            print("Experiment no." + str(exp_idx) + " started.") 
+                            main(config, pruning_settings, log_filename)
+                        except:
+                            print("An exception occurred in experiment no." + str(exp_idx))
                 exp_idx += 1
 
         ## Exp 2. Adjust malicious clients (excluding default mode (9))
         
-        config.environment.num_malicious_clients = 3 # 30% OUT OF 30 CLIENTS
+        config.environment.num_malicious_clients = DEFAULT_NUM_MAL_WORKDERS # 30% OUT OF 30 CLIENTS
         config.environment.attack_frequency = 0.5
         config.environment.prune_frequency = 0.2
 
-        for num_malicious in [1,3,9,15]:
+        for num_malicious in [1,3,15]:
             config.environment.attacker_full_knowledge = False
             config.server.num_rounds = 25
-            config.environment.num_malicious_clients = 3 # 30% OUT OF 30 CLIENTS
+            config.environment.num_malicious_clients = DEFAULT_NUM_MAL_WORKDERS # 30% OUT OF 30 CLIENTS
             config.environment.attack_frequency = 0.5
             config.environment.paoding = 1
             config.environment.prune_frequency = 0.2
@@ -190,6 +219,8 @@ if __name__ == '__main__':
                 curr_exp_settings.append(str(num_malicious)+"-attcker")
                 if paoding_option == 1:
                     curr_exp_settings.append('paoding')
+                elif paoding_option == 2:
+                    curr_exp_settings.append('adaptive')
                 
                 if exp_idx < RESUME:
                     print("Experiment no." + str(exp_idx) + " skipped.")
@@ -205,7 +236,7 @@ if __name__ == '__main__':
     if RQ2:
         config.environment.attacker_full_knowledge = False
         config.server.num_rounds = 25
-        config.environment.num_malicious_clients = 3 # 30% OUT OF 30 CLIENTS
+        config.environment.num_malicious_clients = DEFAULT_NUM_MAL_WORKDERS # 30% OUT OF 30 CLIENTS
         config.environment.attack_frequency = 0.5
         config.environment.prune_frequency = 0.2
         
@@ -217,6 +248,8 @@ if __name__ == '__main__':
             curr_exp_settings.append("FedAvg")
             if paoding_option == 1:
                 curr_exp_settings.append('paoding')
+            elif paoding_option == 2:
+                curr_exp_settings.append('adaptive')
                 
             if exp_idx < RESUME:
                 print("Experiment no." + str(exp_idx) + " skipped.")
@@ -244,6 +277,8 @@ if __name__ == '__main__':
                     curr_exp_settings.append("TrimMean-Cons")
                 if paoding_option == 1:
                     curr_exp_settings.append('paoding')
+                elif paoding_option == 2:
+                    curr_exp_settings.append('adaptive')
                     
                 if exp_idx < RESUME:
                     print("Experiment no." + str(exp_idx) + " skipped.")
@@ -268,6 +303,8 @@ if __name__ == '__main__':
             curr_exp_settings.append("Krum")
             if paoding_option == 1:
                 curr_exp_settings.append('paoding')
+            elif paoding_option == 2:
+                curr_exp_settings.append('adaptive')
                     
             if exp_idx < RESUME:
                 print("Experiment no." + str(exp_idx) + " skipped.")
@@ -282,7 +319,7 @@ if __name__ == '__main__':
             exp_idx += 1        
     if RQ3:
         config.server.num_rounds = 25
-        config.environment.num_malicious_clients = 3 # 30% OUT OF 30 CLIENTS
+        config.environment.num_malicious_clients = DEFAULT_NUM_MAL_WORKDERS # 30% OUT OF 30 CLIENTS
         config.environment.attack_frequency = 0.5
         config.environment.prune_frequency = 0.2
         
@@ -302,6 +339,8 @@ if __name__ == '__main__':
                 curr_exp_settings.append("FedAvg")
                 if paoding_option == 1:
                     curr_exp_settings.append('paoding')
+                elif paoding_option == 2:
+                    curr_exp_settings.append('adaptive')
                     
                 if exp_idx < RESUME:
                     print("Experiment no." + str(exp_idx) + " skipped.")

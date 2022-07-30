@@ -126,7 +126,7 @@ class Client:
         return malicious_weights
 
     def build_optimizer(self, optimizer_config):
-        print("build opt:", optimizer_config)
+        #print("build opt:", optimizer_config)
         # return elaborate optimizer, potentially with stepdecay
         opt = optimizer_config['optimizer']
         lr = optimizer_config['learning_rate'] if 'learning_rate' in optimizer_config else None
@@ -722,7 +722,7 @@ class Client:
         logging.debug(f"Client {self.id}: Training loss {loss}")
 
     def eval_aux_test(self, loss_object):
-        print(" >>> eval aux test is called.")
+        #print(" >>> eval aux test is called.")
         for batch_x, batch_y in self.dataset.get_aux_test_generator(1):
             #print(" >>> ", batch_x, batch_y)
             preds = self.model(batch_x, training=False)

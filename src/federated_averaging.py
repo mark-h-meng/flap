@@ -221,24 +221,11 @@ class FederatedAveraging:
         else:
             for bid in range(self.num_clients):
                 x, y = self.global_dataset.get_dataset_for_client(bid)
-                if mal_clients[bid] and self.config.environment.attacker_full_dataset:
-                    x, y = self.global_dataset.get_full_dataset(x.shape[0] * 20)
 
                 if mal_clients[bid] and self.config.environment.attacker_full_dataset:
                     x, y = self.global_dataset.get_full_dataset(x.shape[0] * 20)
 
                 ds = self.get_local_dataset(self.config.dataset.augment_data, self.attack_dataset, x, y, batch_size=self.batch_size)
-                
-                if mal_clients[bid]:
-                    if self.attack_dataset.type != "pixel_pattern":
-                        #print(f"Replacing value {self.attack_dataset.type}")
-                        # This is very ugly, but we do not want to assign pixel pattern as it uses
-                        # training data of the client...
-                        ds.x_aux, ds.y_aux, ds.mal_aux_labels = self.global_dataset.x_aux_train, \
-                                                                  self.global_dataset.y_aux_train, \
-                                                                  self.global_dataset.mal_aux_labels_train
-                    ds.x_aux_test, ds.mal_aux_labels_test = self.global_dataset.x_aux_test, \
-                                                            self.global_dataset.mal_aux_labels_test
                 
                 self.client_objs.append(Client(bid, self.client_config, ds, mal_clients[bid]))
 
@@ -317,7 +304,7 @@ class FederatedAveraging:
         return client_dropout_mask, weights_list
 
     ### [MARK] The entry point of FL core
-    def fit(self, pruning=False, log_file=None, pruning_settings=(0,0)):
+    def fit(self, pruning=0, log_file=None, pruning_settings=(0,0)):
         """Trains the global model."""
         if log_file:
             with open(log_file, 'a', newline='\n') as logger:
@@ -462,13 +449,13 @@ class FederatedAveraging:
 
                     ### [MARK] DO PRUNING (ON EACH ACTIVE CLIENT) HERE IF WE WANT IT TO BE DONE PRIOR TO THE AGGREGATION
                     
-                    if pruning == 1 and round > 0 and round % (1 / self.prune_frequency) == 0:
+                    if pruning >= 1 and round > 0 and round % (1 / self.prune_frequency) == 0:
                     
                         pruning_params = (0.75, 0.25)
                         
                         pruning_target, pruning_step, pruning_evaluation_type = pruning_settings
 
-                        print(">>>>>> HERE we simulate the pruning process, the global weight is in ", type(weights), "type and in ", len(weights), "size.")
+                        print(">>>>>> HERE we perform the pruning process, the global weight is in ", type(weights), "type and in ", len(weights), "size.")
                         
                         local_time = time.localtime()
                         timestamp_str = time.strftime('%b%d%H%M', local_time)
@@ -516,7 +503,7 @@ class FederatedAveraging:
                         
                         import cnn_prune as pruning_utils
                         print("Are we going to prune conv layer?", self.config.environment.pruneconv)
-                        if self.config.environment.pruneconv and round <= 25:
+                        if self.config.environment.pruneconv and round <= 20:
                             method = 'l1'
                             opt = keras.optimizers.RMSprop(lr=0.0001, decay=1e-6)
                             model = keras.models.load_model(pruned_model_path)
@@ -534,6 +521,7 @@ class FederatedAveraging:
                         has_been_pruned = 1
 
                     ### [MARK] Gaussian noise added after aggregation
+
                     if self.config.server.gaussian_noise > 0.0:
                         logging.debug(f"Adding noise to aggregated model {self.config.server.gaussian_noise}")
                         total_norm = tf.norm(tf.concat([tf.reshape(weights[i], [-1])
@@ -563,7 +551,7 @@ class FederatedAveraging:
 
                             weights[i] = sum
                         # weights = [layer + self.noise_with_layer(layer) for layer in weights]
-
+                    
                     if self.keep_history:
                         self.parameters_history.append(deepcopy(weights))
 

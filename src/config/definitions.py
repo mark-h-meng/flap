@@ -101,10 +101,10 @@ class Environment(DataClassYAMLMixin):
     """Whether to create a separate experiments output directory. 
     If `False` (default), the directory of the config YAML file is used as output directory."""
 
-    paoding: int = 0 # randomness seed
+    paoding: int = 0 
     """Using paoding to prune the aggregated model"""
     
-    pruneconv: int = 0 # randomness seed
+    pruneconv: int = 0 
     """Prune the convolutional layer"""
 
     prune_frequency: Optional[float] = 0.2 #

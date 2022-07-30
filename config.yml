@@ -1,9 +1,9 @@
 environment:
   seed: 42
-  num_clients: 3383
+  num_clients: 100
   num_selected_clients: 30
   num_malicious_clients: 3
-  experiment_name: "backdoor_tasks"
+  experiment_name: "targeted_tasks"
   attacker_full_knowledge: False
   attacker_full_dataset: False
   attack_frequency: 0.5
