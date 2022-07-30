@@ -1,6 +1,6 @@
 environment:
   seed: 42
-  num_clients: 100
+  num_clients: 33
   num_selected_clients: 30
   num_malicious_clients: 3
   experiment_name: "targeted_tasks"
@@ -33,7 +33,7 @@ client:
     num_epochs: 2
     batch_size: 24
     optimizer: Adam
-    learning_rate: 0.01
+    learning_rate: 0.001
   malicious:
     objective:
       name: TargetedAttack
@@ -43,7 +43,7 @@ client:
         num_batch: 5
         poison_samples: 12
         optimizer: Adam
-        learning_rate: 0.001
+        learning_rate: 0.01
         reduce_lr: true
     evasion:
       name: NormBoundPGDEvasion
