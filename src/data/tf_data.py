@@ -115,6 +115,9 @@ class Dataset:
             .take(num_batches)
 
     def get_aux_test_generator(self, aux_size):
+        print(" >> Dataset: get aux test generator", aux_size)
+        #print(" >>> x_aux_test", self.x_aux_test)
+        #print(" >>> mal_aux_labels_test", self.mal_aux_labels_test)
         if aux_size == 0:
             return tf.data.Dataset.from_tensor_slices((self.x_aux_test, self.mal_aux_labels_test)) \
                 .batch(self.batch_size, drop_remainder=False) \
@@ -261,6 +264,7 @@ class ImageGeneratorDataset(Dataset):
 
     def get_aux_test_generator(self, aux_size):
         print("Generating adv samples: Image Generator")
+        print(" >> ImgGeneratorDataset: get aux test generator")
         if aux_size == 0:
             return tf.data.Dataset.from_tensor_slices((self.x_aux_test, self.mal_aux_labels_test)) \
                 .batch(self.batch_size, drop_remainder=False) \
@@ -352,6 +356,7 @@ class PixelPatternDataset(ImageGeneratorDataset):
         self.pixel_pattern = 'basic'
 
     def get_aux_test_generator(self, aux_size):
+        print(" >> PxlPatternDataset: get aux test generator")
         print("Generating adv samples: Pixel Pattern")
         if aux_size == 0:
             return tf.data.Dataset.from_tensor_slices((self.x_aux_test, self.mal_aux_labels_test)) \

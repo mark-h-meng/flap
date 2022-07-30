@@ -13,7 +13,6 @@ def load_global_dataset(config, malicious_clients, attack_dataset) -> GlobalData
     :type config: Config
     :type malicious_clients: np.array boolean list of clients malicious state
     """
-
     attack_type = Attack(config.client.malicious.attack_type) \
         if config.client.malicious is not None else None
     dataset: GlobalDataset
@@ -25,6 +24,8 @@ def load_global_dataset(config, malicious_clients, attack_dataset) -> GlobalData
 
     if attack_type == Attack.BACKDOOR:
         attack_ds_config: AttackDatasetConfig = attack_dataset
+        
+        print(">> attack_ds_config.type",attack_ds_config.type)
 
         if attack_ds_config.type == 'semantic':
             assert attack_ds_config.train != [] and attack_ds_config.test, \

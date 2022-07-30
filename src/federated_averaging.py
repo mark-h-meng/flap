@@ -221,11 +221,25 @@ class FederatedAveraging:
         else:
             for bid in range(self.num_clients):
                 x, y = self.global_dataset.get_dataset_for_client(bid)
+                if mal_clients[bid] and self.config.environment.attacker_full_dataset:
+                    x, y = self.global_dataset.get_full_dataset(x.shape[0] * 20)
 
                 if mal_clients[bid] and self.config.environment.attacker_full_dataset:
                     x, y = self.global_dataset.get_full_dataset(x.shape[0] * 20)
 
                 ds = self.get_local_dataset(self.config.dataset.augment_data, self.attack_dataset, x, y, batch_size=self.batch_size)
+                
+                if mal_clients[bid]:
+                    if self.attack_dataset.type != "pixel_pattern":
+                        #print(f"Replacing value {self.attack_dataset.type}")
+                        # This is very ugly, but we do not want to assign pixel pattern as it uses
+                        # training data of the client...
+                        ds.x_aux, ds.y_aux, ds.mal_aux_labels = self.global_dataset.x_aux_train, \
+                                                                  self.global_dataset.y_aux_train, \
+                                                                  self.global_dataset.mal_aux_labels_train
+                    ds.x_aux_test, ds.mal_aux_labels_test = self.global_dataset.x_aux_test, \
+                                                            self.global_dataset.mal_aux_labels_test
+                
                 self.client_objs.append(Client(bid, self.client_config, ds, mal_clients[bid]))
 
     @staticmethod

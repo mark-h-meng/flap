@@ -65,7 +65,7 @@ def generate_logfile_name(curr_exp_settings=[]):
         log_filename += "-"
         log_filename += setting_str
     
-    log_filename += ".txt"
+    log_filename += ".csv"
     return log_filename
 
 ### Now let's try to run it in batch, by rewriting the main function
@@ -81,11 +81,10 @@ if __name__ == '__main__':
     config.server.aggregator['args'] = {}
     
     config.environment.attacker_full_knowledge = False
-    # config.server.num_rounds = 25
+    config.server.num_rounds = 25
     config.environment.num_malicious_clients = 9 # 30% OUT OF 30 CLIENTS
     config.environment.attack_frequency = 0.5
     config.environment.paoding = 1
-    #config.environment.pruneconv = 0
     config.environment.prune_frequency = 0.2
     
     pruning_evaluation_type = 'mnist'
@@ -98,7 +97,7 @@ if __name__ == '__main__':
     TUNING_PRUNING = False
     RESUME = 0
     DEFAULT_REPEAT = 4
-    RQ1 = 0
+    RQ1 = 1
     RQ2 = 1
     RQ3 = 1
     # Now we perform a series of experiments by adjusting certain settings
@@ -131,14 +130,22 @@ if __name__ == '__main__':
                     print("Experiment no." + str(exp_idx) + " skipped.")                    
                 exp_idx += 1
     if RQ1:
+        config.environment.attacker_full_knowledge = False
+        config.server.num_rounds = 25
+        config.environment.num_malicious_clients = 9 # 30% OUT OF 30 CLIENTS
+        config.environment.attack_frequency = 0.5
+        config.environment.paoding = 1
+        config.environment.prune_frequency = 0.2
+        
         ## Exp 1. Adjust attack frequency
-        #for attack_freq in [0.001,0.1,0.2,0.5,1]:
-        for attack_freq in [0.5,1]:
+        for attack_freq in [1, 0.5, 0.2, 0.1, 0.001]:
+        #for attack_freq in [0.5,1]:
             config.environment.attack_frequency = attack_freq
             for paoding_option in [0,1]:
                 config.environment.paoding = paoding_option
                 curr_exp_settings = []
                 curr_exp_settings.append(config.dataset.dataset)
+                curr_exp_settings.append('RQ1')
                 curr_exp_settings.append(str(attack_freq))
                 if paoding_option == 1:
                     curr_exp_settings.append('paoding')
@@ -147,21 +154,29 @@ if __name__ == '__main__':
                 else:
                     log_filename = generate_logfile_name(curr_exp_settings)
                     for i in range(0, DEFAULT_REPEAT):
-                        try:
-                            print("Experiment no." + str(exp_idx) + " started.") 
-                            main(config, pruning_settings, log_filename)
-                        except:
-                            print("An exception occurred in experiment no." + str(exp_idx))
+                        #try:
+                        #    print("Experiment no." + str(exp_idx) + " started.") 
+                        main(config, pruning_settings, log_filename)
+                        #except:
+                        #    print("An exception occurred in experiment no." + str(exp_idx))
                 exp_idx += 1
     
         ## Exp 2. Adjust malicious clients (excluding default mode (9))
         for num_malicious in [1,3,9,15]:
+            config.environment.attacker_full_knowledge = False
+            config.server.num_rounds = 25
+            config.environment.num_malicious_clients = 9 # 30% OUT OF 30 CLIENTS
+            config.environment.attack_frequency = 0.5
+            config.environment.paoding = 1
+            config.environment.prune_frequency = 0.2
+            
             config.environment.num_malicious_clients = num_malicious
             config.client.malicious.backdoor['tasks'] = num_malicious
             for paoding_option in [0,1]:
                 config.environment.paoding = paoding_option
                 curr_exp_settings = []
                 curr_exp_settings.append(config.dataset.dataset)
+                curr_exp_settings.append('RQ1')
                 curr_exp_settings.append(str(num_malicious)+"-attcker")
                 if paoding_option == 1:
                     curr_exp_settings.append('paoding')
@@ -178,10 +193,18 @@ if __name__ == '__main__':
                             print("An exception occurred in experiment no." + str(exp_idx))                   
                 exp_idx += 1
     if RQ2:
+        config.environment.attacker_full_knowledge = False
+        config.server.num_rounds = 25
+        config.environment.num_malicious_clients = 9 # 30% OUT OF 30 CLIENTS
+        config.environment.attack_frequency = 0.5
+        config.environment.paoding = 1
+        config.environment.prune_frequency = 0.2
+        
         for paoding_option in [0,1]:
             config.environment.paoding = paoding_option
             curr_exp_settings = []
             curr_exp_settings.append(config.dataset.dataset)
+            curr_exp_settings.append('RQ2')
             curr_exp_settings.append("FedAvg")
             if paoding_option == 1:
                 curr_exp_settings.append('paoding')
@@ -205,6 +228,7 @@ if __name__ == '__main__':
                 config.environment.paoding = paoding_option
                 curr_exp_settings = []
                 curr_exp_settings.append(config.dataset.dataset)
+                curr_exp_settings.append('RQ2')
                 if tm_beta > 0.25:
                     curr_exp_settings.append("TrimMean-Radi")
                 else:
@@ -231,6 +255,7 @@ if __name__ == '__main__':
             config.environment.paoding = paoding_option
             curr_exp_settings = []
             curr_exp_settings.append(config.dataset.dataset)
+            curr_exp_settings.append('RQ2')
             curr_exp_settings.append("Krum")
             if paoding_option == 1:
                 curr_exp_settings.append('paoding')
@@ -247,6 +272,12 @@ if __name__ == '__main__':
                         print("An exception occurred in experiment no." + str(exp_idx))                   
             exp_idx += 1        
     if RQ3:
+        config.server.num_rounds = 25
+        config.environment.num_malicious_clients = 9 # 30% OUT OF 30 CLIENTS
+        config.environment.attack_frequency = 0.5
+        config.environment.paoding = 1
+        config.environment.prune_frequency = 0.2
+        
         config.environment.attacker_full_knowledge = True
         for attacker_full_dataset in [False,True]:
             config.environment.attacker_full_dataset = attacker_full_dataset
@@ -255,6 +286,7 @@ if __name__ == '__main__':
                 config.environment.paoding = paoding_option
                 curr_exp_settings = []
                 curr_exp_settings.append(config.dataset.dataset)
+                curr_exp_settings.append('RQ3')
                 if attacker_full_dataset:
                     curr_exp_settings.append("FullKn")
                 else:
@@ -281,8 +313,12 @@ if __name__ == '__main__':
                 for paoding_option in [0,1]:
                     config.environment.paoding = paoding_option
                     curr_exp_settings = []
+                    curr_exp_settings.append('RQ3')
                     curr_exp_settings.append(config.dataset.dataset)
-                    curr_exp_settings.append("FK")
+                    if attacker_full_dataset:
+                        curr_exp_settings.append("FullKn")
+                    else:
+                        curr_exp_settings.append("PartialKn")
                     if tm_beta > 0.25:
                         curr_exp_settings.append("TrimMean-Radi")
                     else:
@@ -310,6 +346,7 @@ if __name__ == '__main__':
                 config.environment.paoding = paoding_option
                 curr_exp_settings = []
                 curr_exp_settings.append(config.dataset.dataset)
+                curr_exp_settings.append('RQ3')
                 if attacker_full_dataset:
                     curr_exp_settings.append("FullKn")
                 else:
