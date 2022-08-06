@@ -294,29 +294,33 @@ if __name__ == '__main__':
 
         config.server.aggregator['name'] = 'Krum'
         config.server.aggregator['args'].pop('beta', None)
-        config.server.aggregator['args']['byz']=0.33
-        for paoding_option in [0,1]:
-            config.environment.paoding = paoding_option
-            curr_exp_settings = []
-            curr_exp_settings.append(config.dataset.dataset)
-            curr_exp_settings.append('RQ2')
-            curr_exp_settings.append("Krum")
-            if paoding_option == 1:
-                curr_exp_settings.append('paoding')
-            elif paoding_option == 2:
-                curr_exp_settings.append('adaptive')
-                    
-            if exp_idx < RESUME:
-                print("Experiment no." + str(exp_idx) + " skipped.")
-            else:
-                log_filename = generate_logfile_name(curr_exp_settings)
-                for i in range(0, DEFAULT_REPEAT):
-                    try:
-                        print("Experiment no." + str(exp_idx) + " started.") 
-                        main(config, pruning_settings, log_filename)
-                    except:
-                        print("An exception occurred in experiment no." + str(exp_idx))                   
-            exp_idx += 1        
+        for byz in [0.33, 0.1]:
+            config.server.aggregator['args']['byz']=byz
+            for paoding_option in [0,1]:
+                config.environment.paoding = paoding_option
+                curr_exp_settings = []
+                curr_exp_settings.append(config.dataset.dataset)
+                curr_exp_settings.append('RQ2')
+                if byz > 0.25:
+                    curr_exp_settings.append("Krum")
+                else:
+                    curr_exp_settings.append("Krum-Cons")
+                if paoding_option == 1:
+                    curr_exp_settings.append('paoding')
+                elif paoding_option == 2:
+                    curr_exp_settings.append('adaptive')
+                        
+                if exp_idx < RESUME:
+                    print("Experiment no." + str(exp_idx) + " skipped.")
+                else:
+                    log_filename = generate_logfile_name(curr_exp_settings)
+                    for i in range(0, DEFAULT_REPEAT):
+                        try:
+                            print("Experiment no." + str(exp_idx) + " started.") 
+                            main(config, pruning_settings, log_filename)
+                        except:
+                            print("An exception occurred in experiment no." + str(exp_idx))                   
+                exp_idx += 1        
     if RQ3:
         config.server.num_rounds = 25
         config.environment.num_malicious_clients = DEFAULT_NUM_MAL_WORKDERS # 30% OUT OF 30 CLIENTS
@@ -386,31 +390,34 @@ if __name__ == '__main__':
                     exp_idx += 1
             
             config.server.aggregator['args'].pop('beta', None)
-            
             config.server.aggregator['name'] = 'Krum'
-            config.server.aggregator['args']['byz']=0.33
-            for paoding_option in [0,1]:
-                config.environment.paoding = paoding_option
-                curr_exp_settings = []
-                curr_exp_settings.append(config.dataset.dataset)
-                curr_exp_settings.append('RQ3')
-                if attacker_full_dataset:
-                    curr_exp_settings.append("FullKn")
-                else:
-                    curr_exp_settings.append("PartialKn")
-                curr_exp_settings.append("Krum")
-                if paoding_option == 1:
-                    curr_exp_settings.append('paoding')
-                    
-                if exp_idx < RESUME:
-                    print("Experiment no." + str(exp_idx) + " skipped.")
-                else:
-                    log_filename = generate_logfile_name(curr_exp_settings)
-                    for i in range(0, DEFAULT_REPEAT):
-                        try:
-                            print("Experiment no." + str(exp_idx) + " started.") 
-                            main(config, pruning_settings, log_filename)
-                        except:
-                            print("An exception occurred in experiment no." + str(exp_idx))                   
-                exp_idx += 1
-            
+            for byz in [0.33, 0.1]:
+                config.server.aggregator['args']['byz']=byz
+                for paoding_option in [0,1]:
+                    config.environment.paoding = paoding_option
+                    curr_exp_settings = []
+                    curr_exp_settings.append(config.dataset.dataset)
+                    curr_exp_settings.append('RQ3')
+                    if attacker_full_dataset:
+                        curr_exp_settings.append("FullKn")
+                    else:
+                        curr_exp_settings.append("PartialKn")
+                    if byz > 0.25:
+                        curr_exp_settings.append("Krum")
+                    else:
+                        curr_exp_settings.append("Krum-Cons")
+                    if paoding_option == 1:
+                        curr_exp_settings.append('paoding')
+                        
+                    if exp_idx < RESUME:
+                        print("Experiment no." + str(exp_idx) + " skipped.")
+                    else:
+                        log_filename = generate_logfile_name(curr_exp_settings)
+                        for i in range(0, DEFAULT_REPEAT):
+                            try:
+                                print("Experiment no." + str(exp_idx) + " started.") 
+                                main(config, pruning_settings, log_filename)
+                            except:
+                                print("An exception occurred in experiment no." + str(exp_idx))                   
+                    exp_idx += 1
+                

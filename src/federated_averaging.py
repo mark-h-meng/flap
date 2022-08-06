@@ -372,7 +372,8 @@ class FederatedAveraging:
                         else:
                             honest = indexes[indexes[:, 1] == False][:self.num_selected_clients, 0]
                             selected_clients = honest
-                            assert len(selected_clients) == self.num_selected_clients, "There must be enough non-malicious clients to select."
+                            assert len(selected_clients) == self.num_selected_clients, \
+                                "There must be enough non-malicious clients to select: "+str(len(selected_clients))+" vs "+str(self.num_selected_clients)
 
                     client_dropout_masks, weights_list = self._create_weights_list(selected_clients)
 
@@ -503,7 +504,7 @@ class FederatedAveraging:
                         
                         import cnn_prune as pruning_utils
                         print("Are we going to prune conv layer?", self.config.environment.pruneconv)
-                        if self.config.environment.pruneconv and round <= 20:
+                        if self.config.environment.pruneconv and round <= 15:
                             method = 'l1'
                             opt = keras.optimizers.RMSprop(lr=0.0001, decay=1e-6)
                             model = keras.models.load_model(pruned_model_path)

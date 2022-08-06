@@ -1,6 +1,6 @@
 environment:
   seed: 42
-  num_clients: 33
+  num_clients: 50
   num_selected_clients: 30
   num_malicious_clients: 3
   experiment_name: "targeted_tasks"
@@ -10,7 +10,7 @@ environment:
   # attack freq 0.2 means attacking for every 1/0.2=5 rounds
   prune_frequency: 0.2
   paoding: 1
-  pruneconv: 1
+  pruneconv: 0
 
 server:
   num_rounds: 25
