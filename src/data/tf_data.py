@@ -193,9 +193,9 @@ class Dataset:
         x_test, y_test = Dataset.keep_samples(x_test, y_test, -1) # Note: hardcoded
 
         # Subtract
-        x_train_mean = np.mean(x_train, axis=0)
-        x_train -= x_train_mean
-        x_test -= x_train_mean
+        # x_train_mean = np.mean(x_train, axis=0)
+        # x_train -= x_train_mean
+        # x_test -= x_train_mean
 
         return (x_train, y_train), (x_test, y_test)
 

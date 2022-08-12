@@ -111,9 +111,9 @@ class Model:
                             strides=(2,2), name='block5_pool'))
 
             model.add(tf.keras.layers.Flatten())
-            model.add(tf.keras.layers.Dense(4096, activation='relu', name='fc1',
+            model.add(tf.keras.layers.Dense(256, activation='relu', name='fc1',
                             kernel_initializer='he_normal', kernel_regularizer=regularizer))
-            model.add(tf.keras.layers.Dense(4096, activation='relu', name='fc2',
+            model.add(tf.keras.layers.Dense(256, activation='relu', name='fc2',
                             kernel_initializer='he_normal', kernel_regularizer=regularizer))
             model.add(tf.keras.layers.Dropout(0.5))
             model.add(tf.keras.layers.Dense(10, activation='softmax', name='predictions',
