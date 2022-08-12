@@ -498,13 +498,22 @@ class FederatedAveraging:
                         except Exception as err:
                             print("An exception occurred in paoding pruning", err)
                             pruned_model_path = original_model_path
+                    
+                    elif self.config.environment.pruneconv and round > 0 and round % (1 / self.prune_frequency) == 0:
+                        local_time = time.localtime()
+                        timestamp_str = time.strftime('%b%d%H%M', local_time)
                         
+                        pruned_model_path = 'paoding/models/'+timestamp_str
+
+                        self.model.set_weights(weights)
+                        self.model.save(pruned_model_path)
+
                         from tensorflow import keras
                         # Here we prune CONV neurons
                         
                         import cnn_prune as pruning_utils
                         print("Are we going to prune conv layer?", self.config.environment.pruneconv)
-                        if self.config.environment.pruneconv and round <= 15:
+                        if self.config.environment.pruneconv:
                             method = 'l1'
                             opt = keras.optimizers.RMSprop(lr=0.0001, decay=1e-6)
                             model = keras.models.load_model(pruned_model_path)
