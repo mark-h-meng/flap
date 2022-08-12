@@ -450,7 +450,7 @@ class FederatedAveraging:
 
                     ### [MARK] DO PRUNING (ON EACH ACTIVE CLIENT) HERE IF WE WANT IT TO BE DONE PRIOR TO THE AGGREGATION
                     
-                    if pruning >= 1 and round > 0 and round % (1 / self.prune_frequency) == 0:
+                    if pruning >= 1 and self.config.environment.paoding ==1 and round > 0 and round % (1 / self.prune_frequency) == 0:
                     
                         pruning_params = (0.75, 0.25)
                         
@@ -499,7 +499,7 @@ class FederatedAveraging:
                             print("An exception occurred in paoding pruning", err)
                             pruned_model_path = original_model_path
                     
-                    elif self.config.environment.pruneconv and round > 0 and round % (1 / self.prune_frequency) == 0:
+                    elif pruning >= 1 and self.config.environment.pruneconv and round > 0 and round % (1 / self.prune_frequency) == 0:
                         local_time = time.localtime()
                         timestamp_str = time.strftime('%b%d%H%M', local_time)
                         
