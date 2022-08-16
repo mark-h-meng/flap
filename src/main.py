@@ -31,12 +31,6 @@ def save_model(model):
 
 def main(config, pruning_settings, log_filename):
     models = [load_model()]
-    
-    # Log some critical info of the current training
-    #with open(log_filename, "a") as myfile:
-    #    myfile.write(str(config.environment) + "\n")
-    #    myfile.write(str(config.server.aggregator) + "\n")
-    #    myfile.write(str(config.client.malicious.backdoor) + "\n")
 
     if config.client.malicious is not None:
         config.client.malicious.attack_type = Attack.UNTARGETED.value \
@@ -98,9 +92,9 @@ if __name__ == '__main__':
 
     TUNING_PRUNING = False
     RESUME = 0
-    DEFAULT_REPEAT = 1
+    DEFAULT_REPEAT = 5d
     BASE_SETTINGS = 0
-    RQ1 = 0
+    RQ1 = 1
     RQ2 = 1
     RQ3 = 1
     # Now we perform a series of experiments by adjusting certain settings
@@ -170,10 +164,10 @@ if __name__ == '__main__':
         config.environment.prune_frequency = 0.2
         
         ## Exp 1. Adjust attack frequency
-        for attack_freq in [1, 0.2, 0.1, 0.001]: 
+        for attack_freq in [0.001]: 
         #for attack_freq in [0.5,1]:
             config.environment.attack_frequency = attack_freq
-            for paoding_option in [0,1]:
+            for paoding_option in [0]:
                 config.environment.paoding = paoding_option
                 curr_exp_settings = []
                 curr_exp_settings.append(config.dataset.dataset)
@@ -201,7 +195,7 @@ if __name__ == '__main__':
         config.environment.attack_frequency = 0.5
         config.environment.prune_frequency = 0.2
 
-        for num_malicious in [1,3,15]:
+        for num_malicious in []:
             config.environment.attacker_full_knowledge = False
             config.server.num_rounds = 25
             config.environment.num_malicious_clients = DEFAULT_NUM_MAL_WORKDERS # 30% OUT OF 30 CLIENTS
