@@ -91,18 +91,18 @@ def calculate_impact_of_pruning_next_layer(model, big_map, pruning_pairs, loc, c
             # approximate the result of (a-b)
             (a_minus_b_lo, a_minus_b_hi) = ia.interval_minus((a_lo, a_hi), (b_lo, b_hi))
             w_a = w[loc + 1][0][a]
-            if len(w_a) is not next_layer_size:
+            if len(w_a) != next_layer_size:
                 raise Exception("Inconsistent size of parameters")
 
             impact_to_next_layer = [ia.interval_scale((a_minus_b_lo, a_minus_b_hi), k) for k in w_a]
         else:
             w_a = w[loc + 1][0][a]
-            if len(w_a) is not next_layer_size:
+            if len(w_a) != next_layer_size:
                 raise Exception("Inconsistent size of parameters")
 
             impact_to_next_layer = [ia.interval_scale((a_lo, a_hi), -1*k) for k in w_a]
 
-        if len(impact_to_next_layer) is not next_layer_size:
+        if len(impact_to_next_layer) != next_layer_size:
             raise Exception("Inconsistent size of parameters")
 
         for index, interval in enumerate(cumulative_next_layer_intervals):
@@ -120,28 +120,49 @@ def get_definition_map(model, definition_dict=None, input_interval=(0, 1)):
     (w, g) = utils.load_param_and_config(model)
     num_layers = len(model.layers)
     layer_idx = 0
+    
+    # [ver 0.1.1] "starting_layer_index" and "ending_layer_index" have been deprecated since 0.1.1 and replaced by  
+    #  the two arrays "dense_layer_indexes" and "non_dense_layer_indexes" to support non-dense layers in the middle
+    #  such as dropout layers.
+    '''
     starting_layer_index = -1
     ending_layer_index = -1
+    '''
+    non_dense_layer_indexes = []
+    dense_layer_indexes = []
+    
     while layer_idx < num_layers - 1:
         if "dense" in model.layers[layer_idx].name:
+            dense_layer_indexes.append(layer_idx)
+            '''
             if starting_layer_index < 0:
-                starting_layer_index = layer_idx - 1
+                prev_dense_layer = layer_idx-1
+                if prev_dense_layer in non_dense_layer_indexes:
+                    prev_dense_layer -= 1
+                starting_layer_index = prev_dense_layer
             if ending_layer_index < layer_idx:
                 ending_layer_index = layer_idx
+            '''
+        else:
+            non_dense_layer_indexes.append(layer_idx)
         layer_idx += 1
 
-    if (starting_layer_index < 0) or (ending_layer_index < 0):
+    if len(dense_layer_indexes) == 0:
         raise Exception("Fully connected layers not identified")
+    if len(dense_layer_indexes) <= 1:
+        raise Exception("Insufficient number of fully connected layers to assess saliency," +\
+            "you may apply other pruning mode and try again. Please ignore this message if " +\
+                "the model is a convnet")
 
     # Now let's create a hash table as dictionary to store all definition intervals of FC neurons
     if definition_dict is None:
         definition_dict = {}
-        definition_dict[starting_layer_index] = {}
+        definition_dict[dense_layer_indexes[0]] = {}
 
-    for i in range(0, len(w[starting_layer_index + 1][0])):
-        definition_dict[starting_layer_index][i] = input_interval
+    for i in range(0, len(w[dense_layer_indexes[1]][0])):
+        definition_dict[dense_layer_indexes[0]][i] = input_interval
 
-    for i in range(starting_layer_index + 1, ending_layer_index + 1):
+    for i in dense_layer_indexes[1:]:
         num_prev_neurons = len(w[i][0])
         num_curr_neurons = len(w[i][0][0])
         if i not in definition_dict.keys():
@@ -152,7 +173,12 @@ def get_definition_map(model, definition_dict=None, input_interval=(0, 1)):
         for m in range(0, num_curr_neurons):
             (sum_lo, sum_hi) = (0, 0)
             for n in range(0, num_prev_neurons):
-                affine_w_x = ia.interval_scale(definition_dict[i-1][n], w[i][0][n][m])
+                
+                prev_dense_layer = i-1
+                if not prev_dense_layer in dense_layer_indexes:
+                    prev_dense_layer -= 1
+
+                affine_w_x = ia.interval_scale(definition_dict[prev_dense_layer][n], w[i][0][n][m])
                 (sum_lo, sum_hi) = ia.interval_add((sum_lo, sum_hi), affine_w_x)
             bias = (w[i][1][m], w[i][1][m])
             (sum_lo, sum_hi) = ia.interval_add((sum_lo, sum_hi), bias)

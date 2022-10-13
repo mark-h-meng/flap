@@ -5,10 +5,11 @@ __credits__ = ["G. Bai", "H. Guo", "S. G. Teo", "J. S. Dong"]
 __license__ = "MIT"
 
 import tensorflow as tf
+from tensorflow.keras.utils import to_categorical
 from tensorflow.keras import datasets, layers, models
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import ReduceLROnPlateau
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import os, shutil
 import numpy as np
 #from sklearn.metrics import confusion_matrix
@@ -17,7 +18,8 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import cv2
-from tensorflow.python.keras import activations
+# VGG19 Model 
+from tensorflow.keras.applications.vgg19 import VGG19
 
 # Quick fix to encounter memory growth issue when working on shared GPU workstation
 physical_devices = tf.config.list_physical_devices('GPU')
@@ -128,53 +130,6 @@ def load_data_creditcard_from_csv(data_path):
     test_features = np.clip(test_features, -5, 5)
     return (train_features, train_labels), (test_features, test_labels)
 
-'''
-def unpickle(file):
-    import pickle
-    with open(file, 'rb') as fo:
-        dict = pickle.load(fo, encoding='latin1')
-    return dict
-
-def load_data_cifar100(data_path):
-    # File paths
-    data_train_path = data_path + 'train'
-    data_test_path = data_path + 'test'
-    data_meta_path = data_path + 'meta'
-
-    # Read dictionary
-    data_train = unpickle(data_train_path)
-    data_test = unpickle(data_test_path)
-    data_meta = unpickle(data_meta_path)
-
-    subCategory = pd.DataFrame(data_meta['fine_label_names'], columns=['SubClass'])
-    subCategoryDict = subCategory.to_dict()
-    
-    superCategory = pd.DataFrame(data_meta['coarse_label_names'], columns=['SuperClass'])
-    superCategoryDict = superCategory.to_dict()
-
-    X_train = data_train['data']
-    y_train=data_train['fine_labels']
-
-    # Usaremos 20% de la data de entrenamiento para validar el desempeño de la red en cada epoch.
-    X_train, X_valid, y_train, y_valid = train_test_split(X_train, y_train, train_size=0.8)
-
-    X_train = X_train.reshape(len(X_train),3,32,32).transpose(0,2,3,1)
-    X_valid = X_valid.reshape(len(X_valid),3,32,32).transpose(0,2,3,1)
-
-    #transforming the testing dataset
-    X_test = data_test['data']
-    X_test = X_test.reshape(len(X_test),3,32,32).transpose(0,2,3,1)
-    y_test = data_test['fine_labels']
-
-    X_train = np.asarray(X_train)
-    y_train = np.asarray(y_train)
-    X_valid = np.asarray(X_valid)
-    y_valid = np.asarray(y_valid)
-    X_test = np.asarray(X_test)
-    y_test = np.asarray(y_test)
-
-    return (X_train, y_train), (X_test, y_test), (X_valid, y_valid), (subCategoryDict, superCategoryDict)
-'''
 
 def train_creditcard_3_layer_mlp(train_data, test_data, path, overwrite=False,
                             optimizer_config = tf.keras.optimizers.Adam(learning_rate=0.001),
@@ -234,17 +189,12 @@ def train_creditcard_3_layer_mlp(train_data, test_data, path, overwrite=False,
         test_loss, test_accuracy = baseline_results[0], baseline_results[-4]
 
         test_predictions_baseline = model.predict(test_features, batch_size=BATCH_SIZE)
-        '''
-        cm = confusion_matrix(test_labels, test_predictions_baseline > 0.5)
-        plt.figure(figsize=(5, 5))
-        sns.heatmap(cm, annot=True, fmt="d")
-        plt.title('Confusion matrix @{:.2f}'.format(0.5))
-        plt.ylabel('Actual label')
-        plt.xlabel('Predicted label')
-        '''
+        
         print("Final Accuracy achieved is: ", test_accuracy, "with Loss", test_loss)
 
         model.save(path)
+        dot_img_file = path + '.png'
+        tf.keras.utils.plot_model(model, to_file=dot_img_file, show_shapes=True)
         print("Model has been saved")
         #plt.show()
 
@@ -258,6 +208,7 @@ def train_cifar_8_layer_cnn(train_data,
                             overwrite=False,
                             use_relu=False,
                             optimizer_config = tf.keras.optimizers.Adam(learning_rate=0.001),
+                            loss_fn=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                             epochs=50):
 
     (train_images, train_labels)=train_data
@@ -288,7 +239,7 @@ def train_cifar_8_layer_cnn(train_data,
         model.add(layers.Dense(10, activation='softmax'))  # Result will be 10 outputs
 
         print(model.summary())
-        model.compile(optimizer=optimizer_config, loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+        model.compile(optimizer=optimizer_config, loss=loss_fn,
                       metrics=['accuracy'])
 
         training_history = model.fit(train_images, train_labels, epochs=epochs,
@@ -298,6 +249,8 @@ def train_cifar_8_layer_cnn(train_data,
         print("Final Accuracy achieved is: ", test_accuracy)
 
         model.save(path)
+        dot_img_file = path + '.png'
+        tf.keras.utils.plot_model(model, to_file=dot_img_file, show_shapes=True)
         print("Model has been saved")
         '''
         plt.plot(training_history.history['accuracy'], label="Accuracy")
@@ -311,6 +264,75 @@ def train_cifar_8_layer_cnn(train_data,
     else:
         print("Model found, there is no need to re-train the model ...")
 
+def train_cifar_cnn(train_data,
+                            test_data,
+                            path,
+                            overwrite=False,
+                            use_relu=False,
+                            optimizer_config = tf.keras.optimizers.Adam(learning_rate=0.001),
+                            loss_fn=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+                            epochs=20,
+                            topK=1):
+
+    (x, y)=train_data
+    (test_images, test_labels)=test_data
+
+    train_images, val_images , train_labels, val_labels = train_test_split(x, y, test_size=0.167, train_size=0.833)
+
+    # Let's start building a model
+    if not os.path.exists(path) or overwrite:
+        if os.path.exists(path):
+            shutil.rmtree(path)
+            print("TRAIN ANYWAY option enabled, create and train a new one ...")
+        else:
+            print(path, " - model not found, create and train a new one ...")
+        model = models.Sequential()
+        model.add(layers.Conv2D(filters=64, kernel_size = (3,3), activation="relu", input_shape=(32, 32, 3)))
+        model.add(layers.Conv2D(filters=64, kernel_size = (3,3), activation="relu"))
+        model.add(layers.MaxPooling2D(pool_size=(2,2)))
+
+        model.add(layers.Conv2D(filters=128, kernel_size = (3,3), activation="relu"))
+        model.add(layers.Conv2D(filters=128, kernel_size = (3,3), activation="relu"))
+        model.add(layers.MaxPooling2D(pool_size=(2,2))) 
+
+        model.add(layers.Conv2D(filters=256, kernel_size = (3,3), activation="relu"))
+        model.add(layers.MaxPooling2D(pool_size=(2,2)))
+            
+        model.add(layers.Flatten())
+        model.add(layers.Dense(512, activation='relu'))
+        model.add(layers.Dense(128, activation='relu'))
+        model.add(layers.Dense(10, activation='softmax'))
+
+        print(model.summary())
+        
+        if topK <= 1:
+            model.compile(optimizer=optimizer_config, loss=loss_fn,
+                      metrics=['accuracy'])
+            
+            training_history = model.fit(train_images, train_labels, epochs=epochs,
+                                        validation_data=(val_images, val_labels))
+
+            test_loss, test_accuracy = model.evaluate(test_images, test_labels, verbose=2)
+            print("Final Accuracy achieved is: ", test_accuracy)
+
+        else:
+            model.compile(optimizer=optimizer_config, 
+                    loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+                    metrics=['accuracy', tf.keras.metrics.TopKCategoricalAccuracy(k=topK)])
+            
+            training_history = model.fit(train_images, train_labels, epochs=epochs,
+                                        validation_data=(val_images, val_labels))
+
+            test_loss, test_accuracy, test_topk_accuracy = model.evaluate(test_images, test_labels, verbose=2)
+            print("Final Accuracy achieved is: ", test_accuracy, " with top-K accuracy as", test_topk_accuracy)
+        model.save(path)
+        dot_img_file = path + '.png'
+        tf.keras.utils.plot_model(model, to_file=dot_img_file, show_shapes=True)
+        print("Model has been saved")
+
+    else:
+        print("Model found, there is no need to re-train the model ...")
+
 
 def train_cifar_9_layer_cnn(train_data,
                             test_data,
@@ -318,6 +340,7 @@ def train_cifar_9_layer_cnn(train_data,
                             overwrite=False,
                             use_relu=False,
                             optimizer_config = tf.keras.optimizers.Adam(learning_rate=0.001),
+                            loss_fn=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                             epochs=20,
                             topK=1):
 
@@ -355,7 +378,7 @@ def train_cifar_9_layer_cnn(train_data,
         print(model.summary())
         
         if topK <= 1:
-            model.compile(optimizer=optimizer_config, loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+            model.compile(optimizer=optimizer_config, loss=loss_fn,
                       metrics=['accuracy'])
             
             training_history = model.fit(train_images, train_labels, epochs=epochs,
@@ -375,6 +398,8 @@ def train_cifar_9_layer_cnn(train_data,
             test_loss, test_accuracy, test_topk_accuracy = model.evaluate(test_images, test_labels, verbose=2)
             print("Final Accuracy achieved is: ", test_accuracy, " with top-K accuracy as", test_topk_accuracy)
         model.save(path)
+        dot_img_file = path + '.png'
+        tf.keras.utils.plot_model(model, to_file=dot_img_file, show_shapes=True)
         print("Model has been saved")
 
     else:
@@ -420,6 +445,8 @@ def train_mnist_3_layer_mlp(train_data, test_data, path, overwrite=False, use_re
         print("Final Accuracy achieved is: ", test_accuracy)
 
         model.save(path)
+        dot_img_file = path + '.png'
+        tf.keras.utils.plot_model(model, to_file=dot_img_file, show_shapes=True)
         print("Model has been saved")
         '''
         plt.plot(training_history.history['accuracy'], label="Accuracy")
@@ -430,6 +457,59 @@ def train_mnist_3_layer_mlp(train_data, test_data, path, overwrite=False, use_re
         plt.legend(loc='lower right')
         #plt.show()
         '''
+    else:
+        print("Model found, there is no need to re-train the model ...")
+
+
+def train_mnist_cnn(train_data, test_data, path, overwrite=False, use_relu=True,
+                            optimizer_config = tf.keras.optimizers.Adam(learning_rate=0.001),
+                            epochs=20):
+    # Ref: https://www.kaggle.com/code/elcaiseri/mnist-simple-cnn-keras-accuracy-0-99-top-1
+    # Annotations: Experiment No. 3
+    (x, y)=train_data
+    (test_images, test_labels)=test_data
+
+    #train_images, val_images , train_labels, val_labels = train_test_split(x, y, test_size=0.167, train_size=0.833)
+
+    # Let's start building a model
+    if not os.path.exists(path) or overwrite:
+        if os.path.exists(path):
+            shutil.rmtree(path)
+            print("TRAIN ANYWAY option enabled, create and train a new one ...")
+        else:
+            print("Model not found, create and train a new one ...")
+        model = models.Sequential()
+        model.add(layers.Conv2D(filters=64, kernel_size = (3,3), activation="relu", input_shape=(28,28,1)))
+        model.add(layers.Conv2D(filters=64, kernel_size = (3,3), activation="relu"))
+        model.add(layers.MaxPooling2D(pool_size=(2,2)))
+
+        model.add(layers.Conv2D(filters=128, kernel_size = (3,3), activation="relu"))
+        model.add(layers.Conv2D(filters=128, kernel_size = (3,3), activation="relu"))
+        model.add(layers.MaxPooling2D(pool_size=(2,2))) 
+
+        model.add(layers.Conv2D(filters=256, kernel_size = (3,3), activation="relu"))
+        model.add(layers.MaxPooling2D(pool_size=(2,2)))
+            
+        model.add(layers.Flatten())
+        model.add(layers.Dense(512, activation='relu'))
+        model.add(layers.Dense(128, activation='relu'))
+        model.add(layers.Dense(10, activation='softmax'))
+
+        print(model.summary())
+        model.compile(optimizer=optimizer_config, loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+                      metrics=['accuracy'])
+
+        training_history = model.fit(x, y, epochs=epochs,
+                                     validation_data=(test_images, test_labels))
+
+        test_loss, test_accuracy = model.evaluate(test_images, test_labels, verbose=2)
+        print("Final Accuracy achieved is: ", test_accuracy)
+
+        model.save(path)
+        dot_img_file = path + '.png'
+        tf.keras.utils.plot_model(model, to_file=dot_img_file, show_shapes=True)
+        print("Model has been saved")
+
     else:
         print("Model found, there is no need to re-train the model ...")
 
@@ -477,6 +557,8 @@ def train_mnist_5_layer_mlp(train_data, test_data, path, overwrite=False, use_re
         print("Final Accuracy achieved is: ", test_accuracy)
 
         model.save(path)
+        dot_img_file = path + '.png'
+        tf.keras.utils.plot_model(model, to_file=dot_img_file, show_shapes=True)
         print("Model has been saved")
         '''
         plt.plot(training_history.history['accuracy'], label="Accuracy")
@@ -580,6 +662,8 @@ def train_pneumonia_binary_classification_cnn(train_data,
         print("Final Accuracy achieved is: ", test_accuracy)
 
         model.save(path)
+        dot_img_file = path + '.png'
+        tf.keras.utils.plot_model(model, to_file=dot_img_file, show_shapes=True)
         print("Model has been saved")
         '''
         plt.plot(training_history.history['accuracy'], label="Accuracy")
@@ -601,6 +685,7 @@ def train_cifar_100_9_layer_cnn(train_data,
                             overwrite=False,
                             use_relu=False,
                             optimizer_config = tf.keras.optimizers.Adam(learning_rate=0.001),
+                            loss_fn=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
                             epochs=30):
 
     (train_images, train_labels)=train_data
@@ -637,7 +722,7 @@ def train_cifar_100_9_layer_cnn(train_data,
         print(model.summary())
         
         model.compile(optimizer=optimizer_config, 
-                    loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+                    loss=loss_fn,
                     metrics=['sparse_top_k_categorical_accuracy'])
         
                       
@@ -671,6 +756,8 @@ def train_cifar_100_9_layer_cnn(train_data,
         print("Final Accuracy achieved is: ", test_accuracy)
 
         model.save(path)
+        dot_img_file = path + '.png'
+        tf.keras.utils.plot_model(model, to_file=dot_img_file, show_shapes=True)
         print("Model has been saved")
         
     else:
@@ -711,6 +798,8 @@ def train_cifar_6_layer_mlp(train_data, test_data, path, overwrite=False,
         print("Final Accuracy achieved is: ", test_accuracy)
 
         model.save(path)
+        dot_img_file = path + '.png'
+        tf.keras.utils.plot_model(model, to_file=dot_img_file, show_shapes=True)
         print("Model has been saved")
         '''
         plt.plot(training_history.history['accuracy'], label="Accuracy")
@@ -724,21 +813,148 @@ def train_cifar_6_layer_mlp(train_data, test_data, path, overwrite=False,
     else:
         print("Model found, there is no need to re-train the model ...")
 
-'''
-if __name__ == "__main__":
-    dataset = 'xray'
 
-    if dataset == 'credit':
-        model_path = 'tf_codes/models/kaggle_mlp_3_layer'
-        data_path = "tf_codes/input/kaggle/creditcard.csv"
-        train_data, test_data = load_data_creditcard_from_csv(data_path)
-        train_creditcard_3_layer_mlp(train_data, test_data, model_path, overwrite=True)
-    elif dataset == 'xray':
-        model_path = 'tf_codes/models/chest_xray_cnn'
-        data_path = "tf_codes/input/chest_xray"
-        train_data, test_data, val_data = load_data_pneumonia(data_path)
-        train_pneumonia_binary_classification_cnn(train_data, test_data, model_path, overwrite=True,
-                                                  epochs=20, data_augmentation=True)
+def transfer_vgg_19_cifar(train_data, test_data, path, overwrite=False, 
+                        optimizer_config = "RMSprop",
+                        loss_fn ="categorical_crossentropy",
+                        epochs=20):
+
+    (train_images, train_labels)=train_data
+    (test_images, test_labels)=test_data
+
+    train_images = resize_img(train_images)
+    test_images = resize_img(test_images)
+
+    # Transform all labels to one-hot encoding
+    train_labels = to_categorical(train_labels,num_classes=10)
+    test_labels = to_categorical(test_labels,num_classes=10)
+
+    # Let's start building a model
+    if not os.path.exists(path) or overwrite:
+        if os.path.exists(path):
+            shutil.rmtree(path)
+            print("TRAIN ANYWAY option enabled, create and train a new one ...")
+        else:
+            print(path, " - model not found, create and train a new one ...")
+        
+        # Include top = add fully connected layers to layer.
+        # Weights = use pretrained weights (trained in imagenet)
+        vgg = VGG19(include_top=False,weights="imagenet",input_shape=(48,48,3))
+
+        model = models.Sequential()
+        for layer in vgg.layers:
+            model.add(layer)
+        
+        # Ensure the vgg layers are not trainable
+        for layer in model.layers:
+            layer.trainable = False
+        
+        # Adding (trainable) fully connected layers
+        model.add(layers.Flatten())
+        model.add(layers.Dense(256))
+        model.add(layers.Dense(128))
+        model.add(layers.Dense(10,activation="softmax"))
+
+        print(model.summary())
+
+        # Total params: 20,091,338
+        # Trainable params: 66,954
+        # Non-trainable params: 20,024,384
+
+        model.compile(optimizer=optimizer_config, loss=loss_fn, metrics=["accuracy"])
+        hist = model.fit(train_images,train_labels,validation_split=0.15,epochs=epochs,batch_size=1000)
+
+
+        test_loss, test_accuracy = model.evaluate(test_images, test_labels, verbose=2)
+        print("Final Accuracy achieved is:", test_accuracy, "and the loss is:", test_loss)
+
+        model.save(path)
+        dot_img_file = path + '.png'
+        tf.keras.utils.plot_model(model, to_file=dot_img_file, show_shapes=True)
+        print("Model has been saved")
     else:
-        print("Dataset not specified, please try again...")
+        print("Model found, there is no need to re-train the model ...")
+
 '''
+Since input image size is (32 x 32), first upsample the image by factor of (7x7) to transform it to (224 x 224)
+Connect the feature extraction and "classifier" layers to build the model.
+'''
+def transfer_resnet_50(train_data, test_data, path, overwrite=False, 
+                        optimizer_config = "SGD",
+                        loss_fn ="sparse_categorical_crossentropy",
+                        epochs=3):
+
+    (train_images, train_labels)=train_data
+    (test_images, test_labels)=test_data
+
+    # Let's start building a model
+    if not os.path.exists(path) or overwrite:
+        if os.path.exists(path):
+            shutil.rmtree(path)
+            print("TRAIN ANYWAY option enabled, create and train a new one ...")
+        else:
+            print(path, " - model not found, create and train a new one ...")
+        
+        inputs = tf.keras.layers.Input(shape=(32,32,3))
+    
+        resize = tf.keras.layers.UpSampling2D(size=(7,7))(inputs)
+
+        resnet_feature_extractor = transfer_resnet_feature_extractor(resize)
+        classification_output = transfer_resnet_entail_classifier(resnet_feature_extractor)
+        model = tf.keras.Model(inputs=inputs, outputs = classification_output)
+        print(model.summary())
+
+        # Total params: 26,215,818
+        # Trainable params: 26,162,698
+        # Non-trainable params: 53,120
+        
+        model.compile(optimizer=optimizer_config, 
+                        loss=loss_fn,
+                        metrics = ['accuracy'])
+
+        hist = model.fit(train_images, train_labels, epochs=epochs, 
+                            validation_data = (test_images, test_labels), batch_size=64)
+        test_loss, test_accuracy = model.evaluate(test_images, test_labels, batch_size=64)
+        print("Final Accuracy achieved is:", test_accuracy, "and the loss is:", test_loss)
+
+        model.save(path)
+        print("Model has been saved")
+    else:
+        print("Model found, there is no need to re-train the model ...")
+  
+
+'''
+Feature Extraction is performed by ResNet50 pretrained on imagenet weights. 
+Input size is 224 x 224.
+'''
+def transfer_resnet_feature_extractor(inputs):
+
+  feature_extractor = tf.keras.applications.resnet.ResNet50(input_shape=(224, 224, 3),
+                                               include_top=False,
+                                               weights='imagenet')(inputs)
+  return feature_extractor
+
+
+'''
+Defines final dense layers and subsequent softmax layer for classification.
+'''
+def transfer_resnet_entail_classifier(inputs):
+    x = tf.keras.layers.GlobalAveragePooling2D()(inputs)
+    x = tf.keras.layers.Flatten()(x)
+    x = tf.keras.layers.Dense(1024, activation="relu")(x)
+    x = tf.keras.layers.Dense(512, activation="relu")(x)
+    x = tf.keras.layers.Dense(10, activation="softmax", name="classification")(x)
+    return x
+
+
+def resize_img(img):
+    num_imgs = img.shape[0]
+    new_array = np.zeros((num_imgs, 48,48,3))
+    for i in range(num_imgs):
+        new_array[i] = cv2.resize(img[i,:,:,:],(48,48))
+    return new_array
+
+def preprocess_image_input_resnet(input_images):
+  input_images = input_images.astype('float32')
+  output_ims = tf.keras.applications.resnet50.preprocess_input(input_images)
+  return output_ims

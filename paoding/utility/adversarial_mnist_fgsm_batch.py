@@ -6,8 +6,8 @@ __license__ = "MIT"
 
 import tensorflow as tf
 from tensorflow.keras import datasets, layers, models
-import matplotlib as mpl
-import matplotlib.pyplot as plt
+#import matplotlib as mpl
+#import matplotlib.pyplot as plt
 import random
 import numpy as np
 import progressbar
@@ -139,7 +139,8 @@ def attack_and_display_images(benign_image, perturbations, adv_image, pretrained
 
 def attack_images(image, pretrained_model):
     # _, label, confidence = get_imagenet_label(pretrained_model.predict(image))
-    image_arr = image_postprocess(image, dims=[28, 28])
+    #image_arr = image_postprocess(image, dims=[28, 28])
+    image_arr = image.numpy().reshape(1, 28, 28, 1)
     probs = pretrained_model.predict(image_arr)
     adv_class, confidence = interpret_prediction(probs[0])
     return adv_class
@@ -198,8 +199,14 @@ def create_adversarial_example(target_image, perturbations, clip_min=-1, clip_ma
     adv_x = tf.clip_by_value(adv_x, clip_min, clip_max)
     return adv_x
 
+def create_adversarial_example_conv(target_image, perturbations, clip_min=-1, clip_max=1):
+    perturbations_np_array = np.expand_dims(np.expand_dims(np.array(perturbations), axis=0), axis=3)
+    adv_x = target_image + perturbations_np_array
+    adv_x = tf.clip_by_value(adv_x, clip_min, clip_max)
+    return adv_x
 
-def robustness_evaluation(model, dataset, epsilons, num_iteration):
+
+def robustness_evaluation(model, dataset, epsilons, num_iteration, flatten_first_layer=False):
 
     # The MNIST dataset contains 60,000 28x28 greyscale images of 10 digits.
     # There are 50000 training images and 10000 test images.
@@ -258,8 +265,11 @@ def robustness_evaluation(model, dataset, epsilons, num_iteration):
 
         # Get the input label of the image.
         benign_label = create_one_hot_vector(image_class, dims=image_probs.shape[-1])
-
-        perturbations = create_adversarial_pattern(target_images[0].reshape(1, 784), benign_label, model,
+        if not flatten_first_layer:
+            perturbations = create_adversarial_pattern(target_images, benign_label, model,
+                                                   loss_object)            
+        else:
+            perturbations = create_adversarial_pattern(target_images[0].reshape(1, 784), benign_label, model,
                                                    loss_object)
 
         # In case there is occurance of ZERO gradient, we xx(randomly)xx -> manually add a sign to the perturbation as either
@@ -293,18 +303,18 @@ def robustness_evaluation(model, dataset, epsilons, num_iteration):
 
         for i, eps in enumerate(epsilons):
             perts = eps * perturbations
-            adv_x = create_adversarial_example(target_images[0], perts)
-            if to_display:
-                descriptions = 'Epsilon = {'+str(eps)+'}'
-                adv_class = attack_and_display_images(target_images[0], perturbations, adv_x, model, description=descriptions)
+            
+            if not flatten_first_layer:
+                adv_x = create_adversarial_example_conv(target_images, perts)
+                
             else:
-                adv_class = attack_images(adv_x, model)
+                adv_x = create_adversarial_example(target_images[0], perts)
+
+            adv_class = attack_images(adv_x, model)
+            
             # Record the maximum epsilon that the classifier still not to misbehave
             if image_class == adv_class:
                 robustness_stat_dict[eps] = robustness_stat_dict[eps] + 1
-            #else:
-                #print("#",sample_index,"; original label:",image_class,"; attack label:",adv_class)
-                #print(str(sample_index), end=" ")
         bar.update(sample_index)
     bar.finish()
 

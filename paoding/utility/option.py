@@ -9,6 +9,8 @@ from enum import Enum
 
 class ModelType(Enum):
     XRAY = 1
+    KDD = 10
+    MRI = 11
     CREDIT = 2
     MNIST = 3
     CIFAR = 4
@@ -18,7 +20,7 @@ class SamplingMode(Enum):
     BASELINE = 1
     GREEDY = 2
     STOCHASTIC = 3
-    SCALE_ONLY = 4
+    SCALE = 0
     OTHER = -1
 
 class AttackAlogirithm(Enum):
