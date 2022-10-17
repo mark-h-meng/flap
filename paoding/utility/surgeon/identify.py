@@ -1,7 +1,7 @@
 """Identify which channels to delete."""
 import numpy as np
 from tensorflow.keras.models import Model
-from paoding.utility.surgeon import utils_dep
+import paoding.utility.surgeon.utils_dep as utils
 
 
 def get_apoz(model, layer, x_val, node_indices=None):

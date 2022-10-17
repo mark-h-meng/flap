@@ -321,16 +321,16 @@ if __name__ == '__main__':
         config.server.num_rounds = 25
         config.environment.num_malicious_clients = DEFAULT_NUM_MAL_WORKDERS # 30% OUT OF 30 CLIENTS
         config.environment.attack_frequency = 0.5
-        config.environment.prune_frequency = 0.2
+        config.environment.prune_frequency = 1
         
         config.environment.attacker_full_knowledge = True
-        for attacker_full_dataset in [False,True]:
+        for attacker_full_dataset in [False]:
             config.environment.attacker_full_dataset = attacker_full_dataset
             
-            for tm_beta in [0.1, 0.4]:
+            for tm_beta in [0.1]:
                 config.server.aggregator['name'] = 'TrimmedMean'
                 config.server.aggregator['args']['beta']=tm_beta
-                for paoding_option in [0,1]:
+                for paoding_option in [1]:
                     config.environment.paoding = paoding_option
                     curr_exp_settings = []
                     curr_exp_settings.append('RQ3')
@@ -351,11 +351,9 @@ if __name__ == '__main__':
                     else:
                         log_filename = generate_logfile_name(curr_exp_settings)
                         for i in range(0, DEFAULT_REPEAT):
-                            try:
-                                print("Experiment no." + str(exp_idx) + " started.") 
-                                main(config, pruning_settings, log_filename)
-                            except:
-                                print("An exception occurred in experiment no." + str(exp_idx))                   
+                            print("Experiment no." + str(exp_idx) + " started.") 
+                            main(config, pruning_settings, log_filename)
+                                           
                     exp_idx += 1
             
             

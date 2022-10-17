@@ -5,7 +5,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import BatchNormalization
 from tensorflow.keras.models import Model
 
-from paoding.utility.surgeon import utils_dep
+import paoding.utility.surgeon.utils_dep as utils
 from ._utils.tensor_dict import TensorDict
 from ._utils import node as node_utils
 

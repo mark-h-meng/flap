@@ -411,7 +411,6 @@ def pruning_stochastic(model, big_map, prune_percentage,
 
         # Exclude non FC layers
         if "dense" in model.layers[layer_idx].name:
-            # print("Pruning Operation Looking at Layer", layer_idx)
 
             num_prev_neurons = len(w[layer_idx][0])
             num_curr_neurons = len(w[layer_idx][0][0])
@@ -669,7 +668,6 @@ def pruning_stochastic(model, big_map, prune_percentage,
 def pruning_conv_scale(model, prune_percentage, layer=None, layer_wise_sampling=1):
     # TO-DO: n_pruned need to be calculated, currently we only use layer wise mode
     n_pruned = 5
-    
     to_prune = []
 
     if layer or layer==0:
@@ -678,6 +676,7 @@ def pruning_conv_scale(model, prune_percentage, layer=None, layer_wise_sampling=
     
     elif layer_wise_sampling:
         norms, size = utils.get_filters_l1(model)
+        
         if norms is None:
             print(" >> No conv layers available to prune")
             return model
@@ -690,7 +689,7 @@ def pruning_conv_scale(model, prune_percentage, layer=None, layer_wise_sampling=
         norms, size = utils.get_filters_l1(model)
         # print(" ++++ The l1 norms are:", norms)
         to_prune = utils.smallest_indices(norms, n_pruned)
-
+    
     if layer or layer ==0:
         model_pruned = prune_one_layer(model, to_prune, layer)
     else:
@@ -713,7 +712,6 @@ def prune_multiple_layers(model, pruned_matrix):
     to_prune[:,0] = np.array([conv_indexes[i] for i in to_prune[:,0]])
     layers_to_prune = np.unique(to_prune[:,0])
     for layer_ix in layers_to_prune :
-        # print(" +++ PRUNING LAYER", layer_ix, model.layers[layer_ix].name)
         pruned_filters = [x[1] for x in to_prune if x[0]==layer_ix]
         pruned_layer = model.layers[layer_ix]
         print(" >>> Prunning layer", layer_ix, "(" + model.layers[layer_ix].name + "):", pruned_filters)

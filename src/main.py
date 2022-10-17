@@ -92,7 +92,7 @@ if __name__ == '__main__':
 
     TUNING_PRUNING = False
     RESUME = 0
-    DEFAULT_REPEAT = 5d
+    DEFAULT_REPEAT = 1
     BASE_SETTINGS = 0
     RQ1 = 1
     RQ2 = 1
@@ -161,13 +161,13 @@ if __name__ == '__main__':
         config.server.num_rounds = 25
         config.environment.num_malicious_clients = DEFAULT_NUM_MAL_WORKDERS # 30% OUT OF 30 CLIENTS
         config.environment.attack_frequency = 0.5
-        config.environment.prune_frequency = 0.2
+        config.environment.prune_frequency = 1
         
         ## Exp 1. Adjust attack frequency
         for attack_freq in [0.001]: 
         #for attack_freq in [0.5,1]:
             config.environment.attack_frequency = attack_freq
-            for paoding_option in [0]:
+            for paoding_option in [1]:
                 config.environment.paoding = paoding_option
                 curr_exp_settings = []
                 curr_exp_settings.append(config.dataset.dataset)

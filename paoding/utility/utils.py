@@ -32,6 +32,7 @@ def create_dir_if_not_exist(path):
     if not os.path.exists(os.path.dirname(path)):
         try:
             os.makedirs(os.path.dirname(path))
+            print(" >>> Make DIR "+str(os.path.dirname(path)))
         except:
             if exec.errno != errno.EEXIST:
                 raise

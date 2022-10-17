@@ -142,6 +142,9 @@ class Pruner:
         ## feed the test_set into the evaluation function
         if type(self.test_set) is tuple:
             t_features, t_labels = self.test_set
+            if len(t_features)==0 or len(t_labels):
+                print("Test set not provided, evaluation aborted...")
+                return 0, 0
             startTime = datetime.now()
             loss, accuracy = self.model.evaluate(t_features, t_labels, verbose=2, batch_size=batch_size)
             elapsed = datetime.now() - startTime
@@ -182,15 +185,19 @@ class Pruner:
         pruned_model_path: The location to save the pruned model (optional, a fixed path by default).
         """
 
-        if not self.stepwise_cnn_pruning:
-            " >> Stepwise CNN pruning enabled: CNN pruning will be done together with FC pruning per step"
-            self.prune_cnv(evaluator, save_file, pruned_model_path, verbose)
         self.prune_fc(evaluator, save_file, pruned_model_path, verbose, model_name, include_cnn_per_step=self.stepwise_cnn_pruning)
+        print(" >>> FC pruning completed")
+
+        if not self.stepwise_cnn_pruning:
+            print(" >> Stepwise CNN pruning enabled: CNN pruning will be done together with FC pruning per step")
+            self.prune_cnv(evaluator, save_file, pruned_model_path, verbose)
+            print(" >>> Conv pruning completed")
+        
 
     def prune_fc(self, evaluator=None, save_file=False, pruned_model_path=None, verbose=0, model_name=None, include_cnn_per_step=False):
         no_fc_to_prune = False
         progress_if_no_fc_to_prune = 0
-
+        
         if evaluator is not None:
             self.robustness_evaluator = evaluator
             self.target_adv_epsilons = evaluator.epsilons
@@ -237,6 +244,7 @@ class Pruner:
         while(not stop_condition):
             
             if include_cnn_per_step:
+                
                 pruned_model_path_conv = self.model_path + "conv_pruned"
                 self.model = self.prune_cnv_step(None, save_file=True, pruned_model_path=pruned_model_path_conv, verbose=1)
                 self.model = tf.keras.models.load_model(pruned_model_path_conv)
@@ -264,15 +272,12 @@ class Pruner:
 
                 # Skip the current round of fc pruning
                 continue
-
-
             pruned_pairs = None
             pruning_result_dict = self.sampler.nominate(model,big_map, 
                                                 prune_percentage=self.pruning_step,
                                                 cumulative_impact_intervals=cumulative_impact_intervals,
                                                 neurons_manipulated=neurons_manipulated, saliency_matrix=saliency_matrix,
                                                 bias_aware=True)
-
             model = pruning_result_dict['model']
             neurons_manipulated = pruning_result_dict['neurons_manipulated']
             target_scores = pruning_result_dict['target_scores']
@@ -395,34 +400,29 @@ class Pruner:
             self.robustness_evaluator = evaluator
             self.target_adv_epsilons = evaluator.epsilons
             self.evaluation_batch = evaluator.batch_size
-
+        
         utils.create_dir_if_not_exist("paoding/logs/")
         # utils.create_dir_if_not_exist("paoding/save_figs/")
         
         if save_file and pruned_model_path is None:
             pruned_model_path=self.model_path
-
         # Start elapsed time counting
         start_time = time.time()
         pruning_result_dict = self.sampler.nominate_conv(self.model, prune_percentage=self.pruning_target)
-
         self.model = pruning_result_dict['model']
 
         self.model.compile(optimizer= self.optimizer, loss=self.loss,
                       metrics=['accuracy'])
 
-        print("CONV pruning accomplished")
+        #if self.test_set is not None:
+        #    self.evaluate(verbose=1)
 
-        if self.test_set is not None:
-            self.evaluate(verbose=1)
-        
         if evaluator is not None and self.test_set is not None:                    
             robust_preservation = self.robustness_evaluator.evaluate_robustness(self.model, self.test_set, self.model_type)
-        
+
         if save_file and os.path.exists(pruned_model_path):
             shutil.rmtree(pruned_model_path)
             print("Overwriting existing pruned model ...")
-
         if save_file:
             self.model.save(pruned_model_path)
             print(" >>> Pruned model saved")

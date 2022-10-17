@@ -115,7 +115,7 @@ class Sampler:
                       bias_aware,
                       kaggle_credit=False)
             (model, neurons_manipulated, target_scores, pruned_pairs, cumulative_impact_intervals, pruning_pairs_dict_overall_scores) = result
-
+            print("FINISH sampling")
             count_pairs_pruned_curr_epoch = 0
             if pruned_pairs is not None:
                 for layer, pairs in enumerate(pruned_pairs):

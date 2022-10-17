@@ -476,7 +476,7 @@ class FederatedAveraging:
                         sampler = Sampler()
                         sampler.set_strategy(mode=SamplingMode.STOCHASTIC, params=pruning_params)  
                         #sampler.set_strategy(mode=SamplingMode.SCALE_ONLY, params=None)   
-                        evaluator = Evaluator()
+                        evaluator = None
 
                         model_type=ModelType.MNIST
                         if pruning_evaluation_type == 'cifar':
@@ -491,14 +491,25 @@ class FederatedAveraging:
                                         model_type=model_type,
                                         seed_val=42)
 
+                        
+                        pruner.load_model()
+                        print(" >>> Model successfully loaded.")
+                        pruner.prune(evaluator=evaluator)
+                        print(" >>> Model pruning accomplished.")
+                        pruner.save_model(pruned_model_path)
+                        print(" >>> Pruned model saved.")
+                        '''
                         try:
                             pruner.load_model()
+                            print(" >>> Model successfully loaded.")
                             pruner.prune(evaluator=evaluator)
+                            print(" >>> Model pruning accomplished.")
                             pruner.save_model(pruned_model_path)
+                            print(" >>> Pruned model saved.")
                         except Exception as err:
                             print("An exception occurred in paoding pruning", err)
                             pruned_model_path = original_model_path
-                    
+                        '''
                     elif pruning >= 1 and self.config.environment.pruneconv and round > 0 and round % (1 / self.prune_frequency) == 0:
                         local_time = time.localtime()
                         timestamp_str = time.strftime('%b%d%H%M', local_time)
