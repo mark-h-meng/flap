@@ -131,18 +131,13 @@ class Model:
                 tf.keras.layers.Dense(32, activation='relu', kernel_regularizer=regularizer, bias_regularizer=regularizer),
                 tf.keras.layers.Dense(10, activation='softmax'),
             ])
-        elif model_name == 'fc': 
-            #model = tf.keras.Sequential([ # LeCun et al. 1998
-            #    tf.keras.layers.Flatten(input_shape=(28,28,1)),
-            #    tf.keras.layers.Dense(500, activation='relu'),
-            #    tf.keras.layers.Dense(150, activation='relu'),
-            #    tf.keras.layers.Dense(10, activation='softmax'),
-            #])
+
+        elif model_name == 'fc_mnist': 
+            # LeCun et al. 1998
             model = tf.keras.Sequential([ # the model used in Paoding
                 tf.keras.layers.Flatten(input_shape=(28,28,1)),
-                tf.keras.layers.Dense(128, activation='relu'),
-                tf.keras.layers.Dense(128, activation='relu'),
-                tf.keras.layers.Dense(64, activation='relu'),
+                tf.keras.layers.Dense(500, activation='relu'),
+                tf.keras.layers.Dense(150, activation='relu'),
                 tf.keras.layers.Dense(10, activation='softmax'),
             ])
         elif model_name == 'bhagoji':

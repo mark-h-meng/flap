@@ -101,7 +101,7 @@ class Pruner:
         optimizer: The optimizer specified for evaluation purpose (optional, RMSprop with lr=0.01 by default).
         """
         self.model = tf.keras.models.load_model(self.model_path)
-        print(self.model.summary())
+        #print(self.model.summary())
         
         if optimizer is None:
             self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
@@ -250,7 +250,7 @@ class Pruner:
                 self.model = self.prune_cnv_step(None, save_file=True, pruned_model_path=pruned_model_path_conv, verbose=1)
                 self.model = tf.keras.models.load_model(pruned_model_path_conv)
                 self.model.compile(optimizer=self.optimizer, loss=self.loss, metrics=['accuracy'])
-                print(self.model.summary())
+                #print(self.model.summary())
                 model = self.model
             else:
                 print(" >>> Step-wise CNN pruning DISABLED")
@@ -393,8 +393,8 @@ class Pruner:
             # final_model_path = self.model_path+"_pruned_surgery"
             final_model_path =pruned_model_path
             self.model = surgeon.create_pruned_model(self.model, pruned_pairs_all_steps, final_model_path, optimizer=self.optimizer, loss_fn=self.loss)
-        else:
-            print(self.model.summary())
+        #else:
+        #    print(self.model.summary())
         print("FC pruning accomplished")
 
     def prune_cnv(self, evaluator=None, save_file=False, pruned_model_path=None, verbose=0):
