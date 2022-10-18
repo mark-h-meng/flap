@@ -360,7 +360,7 @@ class FederatedAveraging:
                         # assert len(indexes[indexes[:, 1] == True]) > 0, "There are 0 malicious attackers."
 
                         ### [MARK] Insert those malicious clients into all active clients for the current round, depends on attack frequency
-                        if round % (1 / self.attack_frequency) == 0:
+                        if round % int(1 / self.attack_frequency) == 0:
                             
                             logging.info("Attackers have FULL knowledge?"+ str(self.attacker_full_knowledge))
                             logging.info("Attackers have FULL dataset access?"+ str(self.attacker_full_dataset))
@@ -450,7 +450,7 @@ class FederatedAveraging:
 
                     ### [MARK] DO PRUNING (ON EACH ACTIVE CLIENT) HERE IF WE WANT IT TO BE DONE PRIOR TO THE AGGREGATION
                     
-                    if pruning >= 1 and self.config.environment.paoding ==1 and round > 0 and round % (1 / self.prune_frequency) == 0:
+                    if pruning >= 1 and self.config.environment.paoding ==1 and round > 0 and round % int(1 / self.prune_frequency) == 0:
                     
                         pruning_params = (0.75, 0.25)
                         
@@ -499,6 +499,7 @@ class FederatedAveraging:
                         print(" >>> Model pruning accomplished.")
                         pruner.save_model(pruned_model_path)
                         print(" >>> Pruned model saved.")
+                        has_been_pruned = 1
                         '''
                         try:
                             pruner.load_model()

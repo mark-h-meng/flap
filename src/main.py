@@ -110,8 +110,8 @@ if __name__ == '__main__':
     pruning_step = 0.01
     pruning_settings = (pruning_target, pruning_step, pruning_evaluation_type)
 
-    RESUME = 0
-    DEFAULT_REPEAT = 3
+    RESUME = 2
+    DEFAULT_REPEAT = 2
     
     RQ1 = 1
     RQ2 = 1
