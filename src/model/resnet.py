@@ -214,10 +214,12 @@ def resnet_v1(input_shape, depth, num_classes=10):
     # Add classifier on top.
     # v1 does not use BN after last shortcut connection-ReLU
     x = AveragePooling2D(pool_size=8)(x)
-    y = Flatten()(x)
+    x = Flatten()(x)
+    x = tf.keras.layers.Dense(512, activation="relu")(x)
+    x = tf.keras.layers.Dense(256, activation="relu")(x)
     outputs = Dense(num_classes,
                     activation='softmax',
-                    kernel_initializer='he_normal')(y)
+                    kernel_initializer='he_normal')(x)
 
     # Instantiate model.
     model = Model(inputs=inputs, outputs=outputs)
@@ -310,10 +312,13 @@ def resnet_v2(input_shape, depth, num_classes=10):
     x = BatchNormalization()(x)
     x = Activation('relu')(x)
     x = AveragePooling2D(pool_size=8)(x)
-    y = Flatten()(x)
-    outputs = Dense(num_classes,
-                    activation='softmax',
-                    kernel_initializer='glorot_uniform')(y)
+    x = Flatten()(x)
+    x = tf.keras.layers.Dense(512, activation="relu")(x)
+    x = tf.keras.layers.Dense(256, activation="relu")(x)
+    outputs = tf.keras.layers.Dense(num_classes, activation="softmax", name="classification")(x)
+    #outputs = Dense(num_classes,
+    #                activation='softmax',
+    #                kernel_initializer='glorot_uniform')(y)
 
     # Instantiate model.
     model = Model(inputs=inputs, outputs=outputs)

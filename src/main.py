@@ -95,8 +95,8 @@ if __name__ == '__main__':
     DEFAULT_REPEAT = 1
     BASE_SETTINGS = 0
     RQ1 = 1
-    RQ2 = 1
-    RQ3 = 1
+    RQ2 = 0
+    RQ3 = 0
     # Now we perform a series of experiments by adjusting certain settings
     exp_idx = 0
     ## Exp 0. Adjust pruning ferquency and target 
@@ -182,11 +182,9 @@ if __name__ == '__main__':
                 else:
                     log_filename = generate_logfile_name(curr_exp_settings)
                     for i in range(0, DEFAULT_REPEAT):
-                        try:
-                            print("Experiment no." + str(exp_idx) + " started.") 
-                            main(config, pruning_settings, log_filename)
-                        except:
-                            print("An exception occurred in experiment no." + str(exp_idx))
+                        print("Experiment no." + str(exp_idx) + " started.") 
+                        main(config, pruning_settings, log_filename)
+                        
                 exp_idx += 1
 
         ## Exp 2. Adjust malicious clients (excluding default mode (9))

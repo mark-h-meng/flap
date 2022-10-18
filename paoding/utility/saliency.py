@@ -22,7 +22,11 @@ def build_saliency_matrix_with_bias(curr_parameters, next_paramters, bias_parame
     for i, x in enumerate(curr_parameters):
         for j, y in enumerate(curr_parameters):
             # The saliency is calculated as s_(i,j)=(a_j) * (||e_(i,j)||+|b_i-b_j|/|b_i+b_j|)
-            bias_term = (bias_parameters[i] - bias_parameters[j]) / (bias_parameters[i] + bias_parameters[j])
+            ## Manipulation to avoid divid-by-zero error
+            if  (bias_parameters[i] + bias_parameters[j]) == 0:
+                bias_term = 0
+            else:
+                bias_term = (bias_parameters[i] - bias_parameters[j]) / (bias_parameters[i] + bias_parameters[j])
             matrix[i, j] = (abs(bias_term) + np.linalg.norm(x-y)) * np.linalg.norm(next_paramters[j])
     return matrix
 

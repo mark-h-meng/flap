@@ -42,8 +42,9 @@ class Pruner:
     hi_bound = 1
 
     stepwise_cnn_pruning = False
+    cnn_pruning = True
     
-    def __init__(self, path, test_set=None, target=0.5, step=0.025, sample_strategy=None, input_interval=(0,1), model_type=ModelType.XRAY, seed_val=None, stepwise_cnn_pruning=False, surgery_mode=False):
+    def __init__(self, path, test_set=None, target=0.5, step=0.025, sample_strategy=None, input_interval=(0,1), model_type=ModelType.XRAY, seed_val=None, stepwise_cnn_pruning=False, surgery_mode=False, cnn_prining=True):
         """
         Initializes `Pruner` class.
         Args:     
@@ -89,6 +90,7 @@ class Pruner:
         #self.first_mlp_layer_size = first_mlp_layer_size
 
         self.stepwise_cnn_pruning = stepwise_cnn_pruning
+        self.cnn_pruning = cnn_prining
 
         self.surgery_mode = surgery_mode
 
@@ -185,14 +187,13 @@ class Pruner:
         pruned_model_path: The location to save the pruned model (optional, a fixed path by default).
         """
 
-        self.prune_fc(evaluator, save_file, pruned_model_path, verbose, model_name, include_cnn_per_step=self.stepwise_cnn_pruning)
-        print(" >>> FC pruning completed")
-
-        if not self.stepwise_cnn_pruning:
-            print(" >> Stepwise CNN pruning enabled: CNN pruning will be done together with FC pruning per step")
+        if not self.stepwise_cnn_pruning and self.cnn_pruning:
             self.prune_cnv(evaluator, save_file, pruned_model_path, verbose)
             print(" >>> Conv pruning completed")
         
+        self.prune_fc(evaluator, save_file, pruned_model_path, verbose, model_name, include_cnn_per_step=self.stepwise_cnn_pruning)
+        print(" >>> FC pruning completed")
+
 
     def prune_fc(self, evaluator=None, save_file=False, pruned_model_path=None, verbose=0, model_name=None, include_cnn_per_step=False):
         no_fc_to_prune = False
@@ -209,10 +210,10 @@ class Pruner:
         utils.create_dir_if_not_exist("paoding/logs/")
         # utils.create_dir_if_not_exist("paoding/save_figs/")
         
-        if save_file and pruned_model_path is None:
+        if pruned_model_path is None:
             #pruned_model_path=self.model_path+"_pruned"
             pruned_model_path=self.model_path
-
+        print(" >>>>>> DUBUG:", pruned_model_path)
         # Define a list to record each pruning decision
         tape_of_moves = []
         # Define a list to record benchmark & evaluation per pruning epoch (begins with original model)
@@ -251,14 +252,15 @@ class Pruner:
                 self.model.compile(optimizer=self.optimizer, loss=self.loss, metrics=['accuracy'])
                 print(self.model.summary())
                 model = self.model
-
+            else:
+                print(" >>> Step-wise CNN pruning DISABLED")
             try:
                 if not map_defined:
                     big_map = simprop.get_definition_map(model, input_interval=(self.lo_bound, self.hi_bound))
                     map_defined = True
             except Exception as err:
                 no_fc_to_prune = True
-                print("Unexpected "+str(err))
+                print("Unexpected: " + str(err))
 
             if no_fc_to_prune:
                 

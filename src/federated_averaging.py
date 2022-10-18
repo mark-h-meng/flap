@@ -489,7 +489,8 @@ class FederatedAveraging:
                                         sample_strategy=sampler,
                                         # evaluator= evaluator,
                                         model_type=model_type,
-                                        seed_val=42)
+                                        seed_val=42,
+                                        cnn_prining=False)
 
                         
                         pruner.load_model()
@@ -510,37 +511,7 @@ class FederatedAveraging:
                             print("An exception occurred in paoding pruning", err)
                             pruned_model_path = original_model_path
                         '''
-                    elif pruning >= 1 and self.config.environment.pruneconv and round > 0 and round % (1 / self.prune_frequency) == 0:
-                        local_time = time.localtime()
-                        timestamp_str = time.strftime('%b%d%H%M', local_time)
-                        
-                        pruned_model_path = 'paoding/models/'+timestamp_str
-
-                        self.model.set_weights(weights)
-                        self.model.save(pruned_model_path)
-
-                        from tensorflow import keras
-                        # Here we prune CONV neurons
-                        
-                        import cnn_prune as pruning_utils
-                        print("Are we going to prune conv layer?", self.config.environment.pruneconv)
-                        if self.config.environment.pruneconv:
-                            method = 'l1'
-                            opt = keras.optimizers.RMSprop(lr=0.0001, decay=1e-6)
-                            model = keras.models.load_model(pruned_model_path)
-                            model_pruned = pruning_utils.prune_model(model, perc=pruning_target, opt=opt, method=method)
-                            model_pruned.save(pruned_model_path_final)
-                            self.model = keras.models.load_model(pruned_model_path_final)
-                            print("Conv pruning accomplished.")
-                        else:    
-                            self.model = keras.models.load_model(pruned_model_path)
-                        
-                        weights = self.model.get_weights()
-                        
-                        # output_list = [' >> pruning ', pruning_step, '/', pruning_target, ' with params ', pruning_params, '\n']
-                        # logger.write(' '.join(map(str, output_list)))
-                        has_been_pruned = 1
-
+                    
                     ### [MARK] Gaussian noise added after aggregation
 
                     if self.config.server.gaussian_noise > 0.0:

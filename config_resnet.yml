@@ -10,7 +10,7 @@ environment:
   # attack freq 0.2 means attacking for every 1/0.2=5 rounds
   prune_frequency: 0.2
   paoding: 1
-  pruneconv: 1
+  pruneconv: 0
 
 server:
   num_rounds: 25
