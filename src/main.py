@@ -18,7 +18,7 @@ def get_timestamp_str():
     timestamp = time.strftime('%m%d-%H%M', local_time)
     return timestamp
 
-def load_model():
+def load_model(temp_filename):
     if config.environment.load_model is not None:
         model = tf.keras.models.load_model(config.environment.load_model) # Load with weights
     else:
@@ -26,21 +26,21 @@ def load_model():
             config.client.model_name, config.server.intrinsic_dimension,
             config.client.model_weight_regularization, config.client.disable_bn)
 
-    temp_filename = save_model(model)
-    return model, temp_filename
+    save_model(model, filename=temp_filename)
+    return model
 
-def save_model(model):
+def save_model(model, filename="temp_model.txt"):
     weights = np.concatenate([x.flatten() for x in model.get_weights()])
-    timestamp = get_timestamp_str()
-    temp_filename = "temp_model_" + timestamp + ".txt"
-    np.savetxt(temp_filename, weights)
-    return temp_filename
+    np.savetxt(filename, weights)
 
 def trash_model(temp_filename):
     os.remove(temp_filename)
 
 def main(config, pruning_settings, log_filename):
-    models, temp_filename = [load_model()]
+    timestamp = get_timestamp_str()
+    temp_filename = "temp_model_" + timestamp + ".txt"
+
+    models = [load_model(temp_filename)]
 
     if config.client.malicious is not None:
         config.client.malicious.attack_type = Attack.UNTARGETED.value \
@@ -49,14 +49,14 @@ def main(config, pruning_settings, log_filename):
     server_model = FederatedAveraging(config, models, args.config_filepath)
     server_model.init()
 
-    start_time = time.time()
+    #start_time = time.time()
     
     server_model.fit(pruning=config.environment.paoding, log_file=log_filename, pruning_settings=pruning_settings)
     
-    end_time = time.time()
+    #end_time = time.time()
 
-    with open(log_filename, "a") as myfile:
-        myfile.write("Elapsed time: " + str(end_time - start_time) + "\n")
+    #with open(log_filename, "a") as myfile:
+    #    myfile.write("Elapsed time: " + str(end_time - start_time) + "\n")
     
     trash_model(temp_filename)
     return
@@ -114,8 +114,8 @@ if __name__ == '__main__':
     DEFAULT_REPEAT = 3
     
     RQ1 = 1
-    RQ2 = 0
-    RQ3 = 0
+    RQ2 = 1
+    RQ3 = 1
     
     # Now we perform a series of experiments by adjusting certain settings
     exp_idx = 1
@@ -150,12 +150,13 @@ if __name__ == '__main__':
                         print("  currently in a repeation (" + str(i) + "/" + str(DEFAULT_REPEAT) + ")")
                         try:
                             main(config, pruning_settings, log_filename)
+                        
                         except Exception as err:
                             print("An exception occurred in experiment no." + str(exp_idx) + ": " + str(err))
                             exc_type, exc_obj, exc_tb = sys.exc_info()
                             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                             print(exc_type, fname, exc_tb.tb_lineno)
-     
+                        
                 exp_idx += 1
 
         ## Exp 2. Adjust malicious clients (excluding default mode (15%))
