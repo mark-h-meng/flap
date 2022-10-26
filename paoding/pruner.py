@@ -190,7 +190,8 @@ class Pruner:
         if not self.stepwise_cnn_pruning and self.cnn_pruning:
             self.prune_cnv(evaluator, save_file, pruned_model_path, verbose)
             print(" >>> Conv pruning completed")
-        
+        else:
+            print(" >>> Conv pruning will be done together with FC pruning: [stepwise] ", self.stepwise_cnn_pruning, ", [cnn_pruning] ", self.cnn_pruning )
         self.prune_fc(evaluator, save_file, pruned_model_path, verbose, model_name, include_cnn_per_step=self.stepwise_cnn_pruning)
         print(" >>> FC pruning completed")
 

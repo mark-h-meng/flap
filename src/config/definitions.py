@@ -109,6 +109,9 @@ class Environment(DataClassYAMLMixin):
 
     prune_frequency: Optional[float] = 0.2 #
     """Frequency of pruning. Default is 0.2"""
+    
+    pretrain: int = 0 
+    """Pretrain the first 20 rounds with all benign clients"""
 
 @dataclass
 class Dataset(DataClassYAMLMixin):

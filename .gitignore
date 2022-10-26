@@ -3,6 +3,7 @@ paoding/models/*
 paoding/logs/*
 paoding/input
 paoding/save_figs
+save_fl_models/*
 logs/*
 logs-*/*
 temp_model*.txt

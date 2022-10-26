@@ -178,6 +178,17 @@ class Model:
             model = resnet_v2(input_shape=(32, 32, 3), depth=56)
             model.summary()
             print("HI")
+        elif model_name == 'resnet50':
+            inputs = tf.keras.layers.Input(shape=(32,32,3))
+            resize = tf.keras.layers.UpSampling2D(size=(7,7))(inputs)
+            feature_extractor = tf.keras.applications.resnet.ResNet50(input_shape=(224, 224, 3),
+                include_top=False, weights='imagenet')(resize)
+            x = tf.keras.layers.GlobalAveragePooling2D()(feature_extractor)
+            x = tf.keras.layers.Flatten()(x)
+            x = tf.keras.layers.Dense(128, activation="relu")(x)
+            x = tf.keras.layers.Dense(64, activation="relu")(x)
+            x = tf.keras.layers.Dense(10, activation="softmax", name="classification")(x)
+            model = tf.keras.Model(inputs=inputs, outputs = x)
         elif model_name == 'mobilenet':
             model = mobilenetv2_cifar10()
             model.summary()
@@ -250,13 +261,15 @@ class Model:
             "mnist": ["mnist_cnn", "dev", "bhagoji", "dev_fc_intrinsic", "dev_intrinsic", "mnistcnn_intrinsic", "bhagoji_intrinsic", "lenet5_mnist"],
             "fmnist": ["mnist_cnn", "dev", "bhagoji", "dev_fc_intrinsic", "dev_intrinsic", "mnistcnn_intrinsic", "bhagoji_intrinsic", "lenet5_mnist"],
             "femnist": ["mnist_cnn", "dev", "bhagoji", "dev_fc_intrinsic", "dev_intrinsic", "mnistcnn_intrinsic", "bhagoji_intrinsic", "lenet5_mnist"],
-            "cifar10": ["resnet18", "resnet32", "resnet44", "resnet56", "resnet110", "resnet18_v2", "resnet56_v2", "lenet5_cifar", "lenet5_intrinsic", "allcnn", "allcnn_intrinsic"]
+            "cifar10": ["resnet18", "resnet32", "resnet44", "resnet50", "resnet56", "resnet110", "resnet18_v2", "resnet56_v2", "lenet5_cifar", "lenet5_intrinsic", "allcnn", "allcnn_intrinsic"]
         }
         return model_name in supported_types[dataset_name]
 
     @staticmethod
     def model_supports_weight_analysis(model_name):
-        return model_name not in ["dev_intrinsic", "dev_fc_intrinsic", "bhagoji_intrinsic", "mnistcnn_intrinsic", "allcnn", "allcnn_intrinsic"]
+        return model_name not in ["dev_intrinsic", "dev_fc_intrinsic", "bhagoji_intrinsic", 
+            "mnistcnn_intrinsic", "allcnn", "allcnn_intrinsic",
+            "resnet50"]
 
     @staticmethod
     def create_optimizer(optimizer_name, learning_rate, decay, steps_per_round):

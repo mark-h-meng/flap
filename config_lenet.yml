@@ -1,19 +1,21 @@
 environment:
   seed: 42
-  num_clients: 50
-  num_selected_clients: 40
-  num_malicious_clients: 6
+  num_clients: 3383
+  num_selected_clients: 20
+  num_malicious_clients: 3
   experiment_name: "lenet"
   attacker_full_knowledge: False
   attacker_full_dataset: False
-  attack_frequency: 0.2
+  attack_frequency: 1
   # attack freq 0.2 means attacking for every 1/0.2=5 rounds
   prune_frequency: 0.5
   paoding: 1
   pruneconv: 1
+  load_model: lenet5_mnist
+  save_model_at: [20]
 
 server:
-  num_rounds: 40
+  num_rounds: 25
   num_test_batches: 5
   aggregator:
     name: FedAvg

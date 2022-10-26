@@ -313,7 +313,6 @@ class FederatedAveraging:
 
                 accuracies, rounds, adv_success_list = [], [], []
 
-
                 # loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
                 #     from_logits=False)  # Our model has a softmax layer!
                 # self.model.compile(
@@ -341,7 +340,11 @@ class FederatedAveraging:
                 import os
                 import psutil
 
-                for round in range(1, self.num_rounds + 1):
+                idx_first_round = 1
+                if self.config.environment.pretrain == 1:
+                    idx_first_round = 21
+                    print(" > Starting from round #21.")
+                for round in range(idx_first_round, self.num_rounds + 1):
                     has_been_pruned = 0
                     has_attack = 0
                     process = psutil.Process(os.getpid())
@@ -360,7 +363,7 @@ class FederatedAveraging:
                         # assert len(indexes[indexes[:, 1] == True]) > 0, "There are 0 malicious attackers."
 
                         ### [MARK] Insert those malicious clients into all active clients for the current round, depends on attack frequency
-                        if round % int(1 / self.attack_frequency) == 0:
+                        if round % int(1 / self.attack_frequency) == 0 and round >= 20:
                             
                             logging.info("Attackers have FULL knowledge?"+ str(self.attacker_full_knowledge))
                             logging.info("Attackers have FULL dataset access?"+ str(self.attacker_full_dataset))
@@ -490,7 +493,7 @@ class FederatedAveraging:
                                         # evaluator= evaluator,
                                         model_type=model_type,
                                         seed_val=42,
-                                        cnn_prining=False)
+                                        cnn_prining=self.config.environment.pruneconv)
 
                         
                         pruner.load_model()
@@ -726,8 +729,9 @@ class FederatedAveraging:
         # print(f"Correct: {self.global_dataset.y_aux_test[pred_inds]} -> {preds[pred_inds]}")
 
     def save_model(self, round):
-        path = os.path.join(self.global_model_dir, f'model_{round}.h5')
-        print(f"Saving model at {path}")
+        #path = os.path.join(self.global_model_dir, f'model_{round}.h5')
+        path = os.path.join("save_fl_models", self.model_name)
+        print(f" > Saving model at {path}")
         self.model.save(path)
 
     def write_hparams(self, hparams, metrics):

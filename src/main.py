@@ -19,10 +19,16 @@ def get_timestamp_str():
     return timestamp
 
 def load_model(temp_filename):
-    if config.environment.load_model is not None:
-        model = tf.keras.models.load_model(config.environment.load_model) # Load with weights
-    else:
-        model = Model.create_model(
+    if config.environment.load_model is not None:        
+        pretrained_model_path = os.path.join("save_fl_models", config.environment.load_model)
+        if os.path.exists(pretrained_model_path):
+            print(" > Found a pretrained model, skip the first 20 rounds.")
+            config.environment.pretrain = 1
+            model = tf.keras.models.load_model(pretrained_model_path) # Load with weights
+            save_model(model, filename=temp_filename)
+            return model
+    
+    model = Model.create_model(
             config.client.model_name, config.server.intrinsic_dimension,
             config.client.model_weight_regularization, config.client.disable_bn)
 
@@ -34,7 +40,11 @@ def save_model(model, filename="temp_model.txt"):
     np.savetxt(filename, weights)
 
 def trash_model(temp_filename):
-    os.remove(temp_filename)
+    try:
+        print(" > Removing temp file:", temp_filename)
+        os.remove(temp_filename)
+    except:
+        print("Error while deleting file ", temp_filename)
 
 def main(config, pruning_settings, log_filename):
     timestamp = get_timestamp_str()
@@ -48,15 +58,8 @@ def main(config, pruning_settings, log_filename):
 
     server_model = FederatedAveraging(config, models, args.config_filepath)
     server_model.init()
-
-    #start_time = time.time()
     
     server_model.fit(pruning=config.environment.paoding, log_file=log_filename, pruning_settings=pruning_settings)
-    
-    #end_time = time.time()
-
-    #with open(log_filename, "a") as myfile:
-    #    myfile.write("Elapsed time: " + str(end_time - start_time) + "\n")
     
     trash_model(temp_filename)
     return
@@ -81,24 +84,25 @@ if __name__ == '__main__':
     tf.random.set_seed(config.environment.seed)
     # Now let double confirm the default configurations
 
-
+    
+    experiment_name = config.client.model_name
+    
     config.server.aggregator['name'] = 'FedAvg'
     config.server.aggregator['args'] = {}
     
     DEFAULT_NUM_MALICIOUS_CLIENTS = int(config.environment.num_selected_clients * 0.15) # 15% OUT OF ALL CLIENTS （See Fang's paper, 15% is the worst case in their experiment)
-    DEFAULT_ATT_FREQ = 0.2
+    DEFAULT_ATT_FREQ = 1
 
     config.environment.attacker_full_knowledge = False
-    config.server.num_rounds = 40
+    config.server.num_rounds = 25
     config.environment.num_malicious_clients = DEFAULT_NUM_MALICIOUS_CLIENTS
     config.environment.attack_frequency = DEFAULT_ATT_FREQ
     config.environment.prune_frequency = 0.5
     config.environment.paoding = 1
     
-    
-    tm_beta_list = [0.2]
+    tm_beta_list = [0.15]
     # tm_beta_list = [0.1, 0.4]
-    byz_list = [0.2]
+    byz_list = [0.15]
     # byz_list = [0.33, 0.1]
 
     # pruning_evaluation_type is only used to define the log file name
@@ -110,22 +114,21 @@ if __name__ == '__main__':
     pruning_step = 0.01
     pruning_settings = (pruning_target, pruning_step, pruning_evaluation_type)
 
-    RESUME = 2
-    DEFAULT_REPEAT = 2
+    # Now we perform a series of experiments by adjusting certain settings
+    exp_idx = 1
+    RESUME = 1
+    DEFAULT_REPEAT = 1
     
     RQ1 = 1
     RQ2 = 1
     RQ3 = 1
-    
-    # Now we perform a series of experiments by adjusting certain settings
-    exp_idx = 1
-    
+
     if RQ1:
         config.environment.attacker_full_knowledge = False
         config.environment.num_malicious_clients = DEFAULT_NUM_MALICIOUS_CLIENTS 
         config.environment.attack_frequency = DEFAULT_ATT_FREQ
 
-        list_of_attack_freq = [0.001, 0.03, 0.2, 0.5, 1]
+        list_of_attack_freq = [0.001, 0.2, 1]
         list_of_malicious_clients_percentage = [0.05, 0.1, 0.15, 0.3]
         
         ## Exp 1. Adjust attack frequency (0.001 means no attack, 0.03 means only 1 attack)
@@ -135,6 +138,7 @@ if __name__ == '__main__':
                 config.environment.paoding = paoding_option
 
                 curr_exp_settings = []
+                curr_exp_settings.append(str(exp_idx))
                 curr_exp_settings.append(config.dataset.dataset)
                 curr_exp_settings.append('RQ1')
                 curr_exp_settings.append(str(attack_freq))
@@ -142,21 +146,21 @@ if __name__ == '__main__':
                     curr_exp_settings.append('paoding')
                 
                 if exp_idx < RESUME:
-                    print("Experiment no." + str(exp_idx) + " (RQ1 Freq) skipped.")                    
+                    print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ1 Freq) skipped.")                    
                 else:
                     log_filename = generate_logfile_name(curr_exp_settings)
                     for i in range(0, DEFAULT_REPEAT):
-                        print("Experiment no." + str(exp_idx) + " (RQ1 Freq) started.") 
+                        print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ1 Freq) started.") 
                         print("  currently in a repeation (" + str(i) + "/" + str(DEFAULT_REPEAT) + ")")
-                        try:
-                            main(config, pruning_settings, log_filename)
-                        
+                        #try:
+                        main(config, pruning_settings, log_filename)
+                        '''
                         except Exception as err:
                             print("An exception occurred in experiment no." + str(exp_idx) + ": " + str(err))
                             exc_type, exc_obj, exc_tb = sys.exc_info()
                             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                             print(exc_type, fname, exc_tb.tb_lineno)
-                        
+                        '''
                 exp_idx += 1
 
         ## Exp 2. Adjust malicious clients (excluding default mode (15%))
@@ -165,11 +169,13 @@ if __name__ == '__main__':
 
         for num_malicious_percentage in list_of_malicious_clients_percentage:        
             config.environment.num_malicious_clients = int(num_malicious_percentage * config.environment.num_selected_clients) 
-            config.client.malicious.backdoor['tasks'] = int(num_malicious_percentage * config.environment.num_selected_clients) 
+            config.client.malicious.backdoor['tasks'] = config.environment.num_malicious_clients
+            #config.client.malicious.backdoor['tasks'] = int(num_malicious_percentage * config.environment.num_selected_clients) 
             for paoding_option in [0,1]:
                 config.environment.paoding = paoding_option
 
                 curr_exp_settings = []
+                curr_exp_settings.append(str(exp_idx))
                 curr_exp_settings.append(config.dataset.dataset)
                 curr_exp_settings.append('RQ1')
                 curr_exp_settings.append(str(config.environment.num_malicious_clients)+"-attcker")
@@ -177,12 +183,14 @@ if __name__ == '__main__':
                     curr_exp_settings.append('paoding')
                 
                 if exp_idx < RESUME:
-                    print("Experiment no." + str(exp_idx) + " (RQ1 # Clients) skipped.")                    
+                    print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ1 # Clients) skipped.")                    
                 else:
                     log_filename = generate_logfile_name(curr_exp_settings)
                     for i in range(0, DEFAULT_REPEAT):
-                        print("Experiment no." + str(exp_idx) + " (RQ1 # Clients) started.") 
+                        print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ1 # Clients) started.") 
                         print("  currently in a repeation (" + str(i) + "/" + str(DEFAULT_REPEAT) + ")")
+                        main(config, pruning_settings, log_filename)
+                        '''
                         try:
                             main(config, pruning_settings, log_filename)
                         except Exception as err:
@@ -190,13 +198,17 @@ if __name__ == '__main__':
                             exc_type, exc_obj, exc_tb = sys.exc_info()
                             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                             print(exc_type, fname, exc_tb.tb_lineno)
-     
+                        '''
                 exp_idx += 1
-                
+        
+
     if RQ2:
+
         config.environment.attacker_full_knowledge = False
         config.environment.num_malicious_clients = DEFAULT_NUM_MALICIOUS_CLIENTS 
         config.environment.attack_frequency = DEFAULT_ATT_FREQ
+        # Reset task number
+        config.client.malicious.backdoor['tasks'] = config.environment.num_malicious_clients
         
         # We skip FedAvg as it is the default setting and has been tested in RQ1
         '''
@@ -213,12 +225,12 @@ if __name__ == '__main__':
                 curr_exp_settings.append('adaptive')
                 
             if exp_idx < RESUME:
-                print("Experiment no." + str(exp_idx) + " skipped.")
+                print(experiment_name + " Experiment no." + str(exp_idx) + " skipped.")
             else:
                 log_filename = generate_logfile_name(curr_exp_settings)
                 for i in range(0, DEFAULT_REPEAT):
                     try:
-                        print("Experiment no." + str(exp_idx) + " started.") 
+                        print(experiment_name + " Experiment no." + str(exp_idx) + " started.") 
                         main(config, pruning_settings, log_filename)
                     except Exception as err:
                         print("An exception occurred in experiment no." + str(exp_idx) + ": " + str(err))   
@@ -235,6 +247,7 @@ if __name__ == '__main__':
                 config.environment.paoding = paoding_option
 
                 curr_exp_settings = []
+                curr_exp_settings.append(str(exp_idx))
                 curr_exp_settings.append(config.dataset.dataset)
                 curr_exp_settings.append('RQ2')
                 if tm_beta > 0.25:
@@ -245,12 +258,14 @@ if __name__ == '__main__':
                     curr_exp_settings.append('paoding')
 
                 if exp_idx < RESUME:
-                    print("Experiment no." + str(exp_idx) + " (RQ2 TM) skipped.")                    
+                    print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ2 TM) skipped.")                    
                 else:
                     log_filename = generate_logfile_name(curr_exp_settings)
                     for i in range(0, DEFAULT_REPEAT):
-                        print("Experiment no." + str(exp_idx) + " (RQ2 TM) started.") 
+                        print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ2 TM) started.") 
                         print("  currently in a repeation (" + str(i) + "/" + str(DEFAULT_REPEAT) + ")")
+                        main(config, pruning_settings, log_filename)
+                        '''
                         try:
                             main(config, pruning_settings, log_filename)
                         except Exception as err:
@@ -258,7 +273,7 @@ if __name__ == '__main__':
                             exc_type, exc_obj, exc_tb = sys.exc_info()
                             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                             print(exc_type, fname, exc_tb.tb_lineno)
-     
+                        '''
                 exp_idx += 1
 
         config.server.aggregator['name'] = 'Krum'
@@ -268,6 +283,7 @@ if __name__ == '__main__':
             for paoding_option in [0,1]:
                 config.environment.paoding = paoding_option
                 curr_exp_settings = []
+                curr_exp_settings.append(str(exp_idx))
                 curr_exp_settings.append(config.dataset.dataset)
                 curr_exp_settings.append('RQ2')
                 if byz > 0.25:
@@ -278,34 +294,40 @@ if __name__ == '__main__':
                     curr_exp_settings.append('paoding')
 
                 if exp_idx < RESUME:
-                    print("Experiment no." + str(exp_idx) + " (RQ2 Krum) skipped.")                    
+                    print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ2 Krum) skipped.")                    
                 else:
                     log_filename = generate_logfile_name(curr_exp_settings)
                     for i in range(0, DEFAULT_REPEAT):
-                        print("Experiment no." + str(exp_idx) + " (RQ2 Krum) started.") 
+                        print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ2 Krum) started.") 
                         print("  currently in a repeation (" + str(i) + "/" + str(DEFAULT_REPEAT) + ")")
-                        try:
-                            main(config, pruning_settings, log_filename)
+                        #try:
+                        main(config, pruning_settings, log_filename)
+                        '''
                         except Exception as err:
                             print("An exception occurred in experiment no." + str(exp_idx) + ": " + str(err))
                             exc_type, exc_obj, exc_tb = sys.exc_info()
                             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                             print(exc_type, fname, exc_tb.tb_lineno)
-     
+                        '''
                 exp_idx += 1
+        config.server.aggregator['args'].pop('byz', None)
 
     if RQ3:
         config.environment.num_malicious_clients = DEFAULT_NUM_MALICIOUS_CLIENTS 
         config.environment.attack_frequency = DEFAULT_ATT_FREQ
+        # Reset task number
+        config.client.malicious.backdoor['tasks'] = config.environment.num_malicious_clients
         
         config.environment.attacker_full_knowledge = True
         for attacker_full_dataset in [False,True]:
             config.environment.attacker_full_dataset = attacker_full_dataset
             
             for paoding_option in [0,1]:
+                config.server.aggregator['name'] = 'FedAvg'
                 config.environment.paoding = paoding_option
 
                 curr_exp_settings = []
+                curr_exp_settings.append(str(exp_idx))
                 curr_exp_settings.append(config.dataset.dataset)
                 curr_exp_settings.append('RQ3')
                 if attacker_full_dataset:
@@ -317,12 +339,14 @@ if __name__ == '__main__':
                     curr_exp_settings.append('paoding')
                     
                 if exp_idx < RESUME:
-                    print("Experiment no." + str(exp_idx) + " (RQ3 FedAvg) skipped.")                    
+                    print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ3 FedAvg) skipped.")                    
                 else:
                     log_filename = generate_logfile_name(curr_exp_settings)
                     for i in range(0, DEFAULT_REPEAT):
-                        print("Experiment no." + str(exp_idx) + " (RQ3 FedAvg) started.") 
+                        print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ3 FedAvg) started.") 
                         print("  currently in a repeation (" + str(i) + "/" + str(DEFAULT_REPEAT) + ")")
+                        main(config, pruning_settings, log_filename)
+                        '''
                         try:
                             main(config, pruning_settings, log_filename)
                         except Exception as err:
@@ -330,7 +354,7 @@ if __name__ == '__main__':
                             exc_type, exc_obj, exc_tb = sys.exc_info()
                             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                             print(exc_type, fname, exc_tb.tb_lineno) 
-     
+                        '''
                 exp_idx += 1
             
             for tm_beta in tm_beta_list:
@@ -339,6 +363,7 @@ if __name__ == '__main__':
                 for paoding_option in [0,1]:
                     config.environment.paoding = paoding_option
                     curr_exp_settings = []
+                    curr_exp_settings.append(str(exp_idx))
                     curr_exp_settings.append('RQ3')
                     curr_exp_settings.append(config.dataset.dataset)
                     if attacker_full_dataset:
@@ -353,12 +378,14 @@ if __name__ == '__main__':
                         curr_exp_settings.append('paoding')
                     
                     if exp_idx < RESUME:
-                        print("Experiment no." + str(exp_idx) + " (RQ3 TM) skipped.")                    
+                        print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ3 TM) skipped.")                    
                     else:
                         log_filename = generate_logfile_name(curr_exp_settings)
                         for i in range(0, DEFAULT_REPEAT):
-                            print("Experiment no." + str(exp_idx) + " (RQ3 TM) started.") 
+                            print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ3 TM) started.") 
                             print("  currently in a repeation (" + str(i) + "/" + str(DEFAULT_REPEAT) + ")")
+                            main(config, pruning_settings, log_filename)
+                            '''
                             try:
                                 main(config, pruning_settings, log_filename)
                             except Exception as err:
@@ -366,7 +393,7 @@ if __name__ == '__main__':
                                 exc_type, exc_obj, exc_tb = sys.exc_info()
                                 fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                                 print(exc_type, fname, exc_tb.tb_lineno)
-        
+                            '''
                     exp_idx += 1
             
             config.server.aggregator['args'].pop('beta', None)
@@ -376,6 +403,7 @@ if __name__ == '__main__':
                 for paoding_option in [0,1]:
                     config.environment.paoding = paoding_option
                     curr_exp_settings = []
+                    curr_exp_settings.append(str(exp_idx))
                     curr_exp_settings.append(config.dataset.dataset)
                     curr_exp_settings.append('RQ3')
                     if attacker_full_dataset:
@@ -390,12 +418,14 @@ if __name__ == '__main__':
                         curr_exp_settings.append('paoding')
                     
                     if exp_idx < RESUME:
-                        print("Experiment no." + str(exp_idx) + " (RQ3 Krum) skipped.")                    
+                        print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ3 Krum) skipped.")                    
                     else:
                         log_filename = generate_logfile_name(curr_exp_settings)
                         for i in range(0, DEFAULT_REPEAT):
-                            print("Experiment no." + str(exp_idx) + " (RQ3 Krum) started.") 
+                            print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ3 Krum) started.") 
                             print("  currently in a repeation (" + str(i) + "/" + str(DEFAULT_REPEAT) + ")")
+                            main(config, pruning_settings, log_filename)
+                            '''
                             try:
                                 main(config, pruning_settings, log_filename)
                             except Exception as err:
@@ -403,6 +433,7 @@ if __name__ == '__main__':
                                 exc_type, exc_obj, exc_tb = sys.exc_info()
                                 fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                                 print(exc_type, fname, exc_tb.tb_lineno)
-                
+                            '''
                     exp_idx += 1
+        config.server.aggregator['args'].pop('byz', None)
                 
