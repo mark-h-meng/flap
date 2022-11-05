@@ -1,22 +1,22 @@
 environment:
   seed: 42
-  num_clients: 100
+  num_clients: 3383
   num_selected_clients: 20
   num_malicious_clients: 3
-  experiment_name: "resnet32"
+  experiment_name: "alexnet"
   attacker_full_knowledge: False
   attacker_full_dataset: False
   attack_frequency: 1
   # attack freq 0.2 means attacking for every 1/0.2=5 rounds
   prune_frequency: 0.5
   paoding: 1
-  pruneconv: 0
-  load_model: resnet32
+  pruneconv: 1
+  load_model: alexnet_cifar
   save_model_at: [20]
 
 server:
-  num_rounds: 26
-  num_test_batches: 64
+  num_rounds: 25
+  num_test_batches: 5
   aggregator:
     name: FedAvg
     #name: TrimmedMean
@@ -25,10 +25,10 @@ server:
   global_learning_rate: -1
 
 client:
-  model_name: resnet32
+  model_name: alexnet_cifar
   benign_training:
-    num_epochs: 5
-    batch_size: 64
+    num_epochs: 2
+    batch_size: 24
     optimizer: Adam
     learning_rate: 0.001
   malicious:
@@ -36,7 +36,7 @@ client:
       name: TargetedAttack
       args:
         num_epochs: 2
-        num_batch: 64
+        num_batch: 5
         poison_samples: 12
         optimizer: Adam
         learning_rate: 0.001

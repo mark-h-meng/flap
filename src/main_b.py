@@ -129,7 +129,7 @@ if __name__ == '__main__':
         config.environment.attack_frequency = DEFAULT_ATT_FREQ
 
         list_of_attack_freq = [0.0001, 0.2, 1]
-        list_of_malicious_clients_percentage = [0.05, 0.15, 0.3]
+        list_of_malicious_clients_percentage = [0.05, 0.1, 0.15, 0.3]
         
         ## Exp 1. Adjust attack frequency (0.001 means no attack, 0.03 means only 1 attack)
         for attack_freq in list_of_attack_freq: 
@@ -140,7 +140,7 @@ if __name__ == '__main__':
                 curr_exp_settings = []
                 curr_exp_settings.append(str(exp_idx))
                 curr_exp_settings.append(config.dataset.dataset)
-                curr_exp_settings.append('RQ1')
+                curr_exp_settings.append('RQ1b')
                 curr_exp_settings.append(str(attack_freq))
                 if paoding_option == 1:
                     curr_exp_settings.append('paoding')
@@ -177,7 +177,7 @@ if __name__ == '__main__':
                 curr_exp_settings = []
                 curr_exp_settings.append(str(exp_idx))
                 curr_exp_settings.append(config.dataset.dataset)
-                curr_exp_settings.append('RQ1')
+                curr_exp_settings.append('RQ1b')
                 curr_exp_settings.append(str(config.environment.num_malicious_clients)+"-attcker")
                 if paoding_option == 1:
                     curr_exp_settings.append('paoding')
@@ -216,7 +216,7 @@ if __name__ == '__main__':
             config.environment.paoding = paoding_option
             curr_exp_settings = []
             curr_exp_settings.append(config.dataset.dataset)
-            curr_exp_settings.append('RQ2')
+            curr_exp_settings.append('RQ2b')
 
             curr_exp_settings.append("FedAvg")
             if paoding_option == 1:
@@ -249,7 +249,7 @@ if __name__ == '__main__':
                 curr_exp_settings = []
                 curr_exp_settings.append(str(exp_idx))
                 curr_exp_settings.append(config.dataset.dataset)
-                curr_exp_settings.append('RQ2')
+                curr_exp_settings.append('RQ2b')
                 if tm_beta > 0.25:
                     curr_exp_settings.append("TrimMean-Radi")
                 else:
@@ -285,7 +285,7 @@ if __name__ == '__main__':
                 curr_exp_settings = []
                 curr_exp_settings.append(str(exp_idx))
                 curr_exp_settings.append(config.dataset.dataset)
-                curr_exp_settings.append('RQ2')
+                curr_exp_settings.append('RQ2b')
                 if byz > 0.25:
                     curr_exp_settings.append("Krum-Radi")
                 else:
@@ -331,7 +331,7 @@ if __name__ == '__main__':
                 curr_exp_settings = []
                 curr_exp_settings.append(str(exp_idx))
                 curr_exp_settings.append(config.dataset.dataset)
-                curr_exp_settings.append('RQ3')
+                curr_exp_settings.append('RQ3b')
                 if attacker_full_dataset:
                     curr_exp_settings.append("FK")
                 else:
@@ -367,7 +367,7 @@ if __name__ == '__main__':
                     curr_exp_settings = []
                     curr_exp_settings.append(str(exp_idx))
                     curr_exp_settings.append(config.dataset.dataset)
-                    curr_exp_settings.append('RQ3')
+                    curr_exp_settings.append('RQ3b')
                     if attacker_full_dataset:
                         curr_exp_settings.append("FK")
                     else:
@@ -407,7 +407,7 @@ if __name__ == '__main__':
                     curr_exp_settings = []
                     curr_exp_settings.append(str(exp_idx))
                     curr_exp_settings.append(config.dataset.dataset)
-                    curr_exp_settings.append('RQ3')
+                    curr_exp_settings.append('RQ3b')
                     if attacker_full_dataset:
                         curr_exp_settings.append("FK")
                     else:

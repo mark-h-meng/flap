@@ -1,9 +1,9 @@
 environment:
   seed: 42
-  num_clients: 100
+  num_clients: 50
   num_selected_clients: 20
   num_malicious_clients: 3
-  experiment_name: "resnet32"
+  experiment_name: "vgg-cifar"
   attacker_full_knowledge: False
   attacker_full_dataset: False
   attack_frequency: 1
@@ -11,12 +11,12 @@ environment:
   prune_frequency: 0.5
   paoding: 1
   pruneconv: 0
-  load_model: resnet32
+  load_model: vgg-cifar
   save_model_at: [20]
 
 server:
-  num_rounds: 26
-  num_test_batches: 64
+  num_rounds: 25
+  num_test_batches: 5
   aggregator:
     name: FedAvg
     #name: TrimmedMean
@@ -25,9 +25,9 @@ server:
   global_learning_rate: -1
 
 client:
-  model_name: resnet32
+  model_name: vgg-cifar
   benign_training:
-    num_epochs: 5
+    num_epochs: 4
     batch_size: 64
     optimizer: Adam
     learning_rate: 0.001
@@ -36,7 +36,7 @@ client:
       name: TargetedAttack
       args:
         num_epochs: 2
-        num_batch: 64
+        num_batch: 5
         poison_samples: 12
         optimizer: Adam
         learning_rate: 0.001

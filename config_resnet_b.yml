@@ -11,8 +11,8 @@ environment:
   prune_frequency: 0.5
   paoding: 1
   pruneconv: 0
-  load_model: resnet32
-  save_model_at: [20]
+  #load_model: resnet32
+  #save_model_at: [20]
 
 server:
   num_rounds: 26

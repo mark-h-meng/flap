@@ -342,8 +342,8 @@ class FederatedAveraging:
 
                 idx_first_round = 1
                 if self.config.environment.pretrain == 1:
-                    idx_first_round = 21
-                    print(" > Starting from round #21.")
+                    idx_first_round = self.config.environment.save_model_at[-1] + 1
+                    print(" > Starting from round #" + str(idx_first_round) + ".")
                 for round in range(idx_first_round, self.num_rounds + 1):
                     has_been_pruned = 0
                     has_attack = 0
@@ -363,7 +363,7 @@ class FederatedAveraging:
                         # assert len(indexes[indexes[:, 1] == True]) > 0, "There are 0 malicious attackers."
 
                         ### [MARK] Insert those malicious clients into all active clients for the current round, depends on attack frequency
-                        if round % int(1 / self.attack_frequency) == 0 and round >= 20:
+                        if round % int(1 / self.attack_frequency) == 0 and round >= idx_first_round:
                             
                             logging.info("Attackers have FULL knowledge?"+ str(self.attacker_full_knowledge))
                             logging.info("Attackers have FULL dataset access?"+ str(self.attacker_full_dataset))

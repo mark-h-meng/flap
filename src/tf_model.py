@@ -140,6 +140,22 @@ class Model:
                 tf.keras.layers.Dense(150, activation='relu'),
                 tf.keras.layers.Dense(10, activation='softmax'),
             ])
+        elif model_name == 'alexnet_cifar':
+            model=tf.keras.models.Sequential([
+                tf.keras.layers.UpSampling2D(size=(2,2), input_shape=(32,32,3)),
+                tf.keras.layers.Conv2D(filters=128, kernel_size=(11,11), strides=(4,4), activation='relu', input_shape=(64,64,3)),
+                tf.keras.layers.MaxPool2D(pool_size=(2,2)),
+                tf.keras.layers.Conv2D(filters=256, kernel_size=(5,5), strides=(1,1), activation='relu', padding="same"),
+                tf.keras.layers.MaxPool2D(pool_size=(3,3)),
+                tf.keras.layers.Conv2D(filters=256, kernel_size=(3,3), strides=(1,1), activation='relu', padding="same"),
+                tf.keras.layers.Conv2D(filters=256, kernel_size=(1,1), strides=(1,1), activation='relu', padding="same"),
+                tf.keras.layers.Conv2D(filters=256, kernel_size=(1,1), strides=(1,1), activation='relu', padding="same"),
+                tf.keras.layers.MaxPool2D(pool_size=(2,2)),
+                tf.keras.layers.Flatten(),
+                tf.keras.layers.Dense(1024,activation='relu'),
+                tf.keras.layers.Dense(1024,activation='relu'),
+                tf.keras.layers.Dense(10,activation='softmax')  
+            ])
         elif model_name == 'bhagoji':
             model = tf.keras.Sequential([
                 tf.keras.layers.Conv2D(64, kernel_size=(5, 5), padding='valid', activation='relu', input_shape=(28, 28, 1)),
