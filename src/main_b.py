@@ -347,6 +347,7 @@ if __name__ == '__main__':
                     else:
                         curr_exp_settings.append("PK")
                     curr_exp_settings.append("FedAvg")
+                    curr_exp_settings.append(reject)
                     if paoding_option == 1:
                         curr_exp_settings.append('paoding')
                         
