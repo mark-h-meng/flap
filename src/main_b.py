@@ -116,7 +116,7 @@ if __name__ == '__main__':
 
     # Now we perform a series of experiments by adjusting certain settings
     exp_idx = 1
-    RESUME = 1
+    RESUME = 2
     DEFAULT_REPEAT = 1
     
     RQ1 = 1
@@ -203,6 +203,7 @@ if __name__ == '__main__':
         
 
     if RQ2:
+        reject_options = ['None', 'ERR', 'LFR', 'UNION']
 
         config.environment.attacker_full_knowledge = False
         config.environment.num_malicious_clients = DEFAULT_NUM_MALICIOUS_CLIENTS 
@@ -240,151 +241,32 @@ if __name__ == '__main__':
             exp_idx += 1
         '''    
 
-        for tm_beta in tm_beta_list:
-            config.server.aggregator['name'] = 'TrimmedMean'
-            config.server.aggregator['args']['beta']=tm_beta
-            for paoding_option in [0,1]:
-                config.environment.paoding = paoding_option
-
-                curr_exp_settings = []
-                curr_exp_settings.append(str(exp_idx))
-                curr_exp_settings.append(config.dataset.dataset)
-                curr_exp_settings.append('RQ2b')
-                if tm_beta > 0.25:
-                    curr_exp_settings.append("TrimMean-Radi")
-                else:
-                    curr_exp_settings.append("TrimMean-Cons")
-                if paoding_option == 1:
-                    curr_exp_settings.append('paoding')
-
-                if exp_idx < RESUME:
-                    print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ2 TM) skipped.")                    
-                else:
-                    log_filename = generate_logfile_name(curr_exp_settings)
-                    for i in range(0, DEFAULT_REPEAT):
-                        print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ2 TM) started.") 
-                        print("  currently in a repeation (" + str(i) + "/" + str(DEFAULT_REPEAT) + ")")
-                        main(config, pruning_settings, log_filename)
-                        '''
-                        try:
-                            main(config, pruning_settings, log_filename)
-                        except Exception as err:
-                            print("An exception occurred in experiment no." + str(exp_idx) + ": " + str(err))
-                            exc_type, exc_obj, exc_tb = sys.exc_info()
-                            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                            print(exc_type, fname, exc_tb.tb_lineno)
-                        '''
-                exp_idx += 1
-
-        config.server.aggregator['name'] = 'Krum'
-        config.server.aggregator['args'].pop('beta', None)
-        for byz in byz_list:
-            config.server.aggregator['args']['byz']=byz
-            for paoding_option in [0,1]:
-                config.environment.paoding = paoding_option
-                curr_exp_settings = []
-                curr_exp_settings.append(str(exp_idx))
-                curr_exp_settings.append(config.dataset.dataset)
-                curr_exp_settings.append('RQ2b')
-                if byz > 0.25:
-                    curr_exp_settings.append("Krum-Radi")
-                else:
-                    curr_exp_settings.append("Krum-Cons")
-                if paoding_option == 1:
-                    curr_exp_settings.append('paoding')
-
-                if exp_idx < RESUME:
-                    print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ2 Krum) skipped.")                    
-                else:
-                    log_filename = generate_logfile_name(curr_exp_settings)
-                    for i in range(0, DEFAULT_REPEAT):
-                        print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ2 Krum) started.") 
-                        print("  currently in a repeation (" + str(i) + "/" + str(DEFAULT_REPEAT) + ")")
-                        #try:
-                        main(config, pruning_settings, log_filename)
-                        '''
-                        except Exception as err:
-                            print("An exception occurred in experiment no." + str(exp_idx) + ": " + str(err))
-                            exc_type, exc_obj, exc_tb = sys.exc_info()
-                            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                            print(exc_type, fname, exc_tb.tb_lineno)
-                        '''
-                exp_idx += 1
-        config.server.aggregator['args'].pop('byz', None)
-
-    if RQ3:
-        config.environment.num_malicious_clients = DEFAULT_NUM_MALICIOUS_CLIENTS 
-        config.environment.attack_frequency = DEFAULT_ATT_FREQ
-        # Reset task number
-        config.client.malicious.backdoor['tasks'] = config.environment.num_malicious_clients
-        
-        config.environment.attacker_full_knowledge = True
-        for attacker_full_dataset in [False,True]:
-            config.environment.attacker_full_dataset = attacker_full_dataset
-            
-            config.server.aggregator['args'].pop('byz', None)
-            config.server.aggregator['args'].pop('beta', None)
-            for paoding_option in [0,1]:
-                config.server.aggregator['name'] = 'FedAvg'
-                config.environment.paoding = paoding_option
-
-                curr_exp_settings = []
-                curr_exp_settings.append(str(exp_idx))
-                curr_exp_settings.append(config.dataset.dataset)
-                curr_exp_settings.append('RQ3b')
-                if attacker_full_dataset:
-                    curr_exp_settings.append("FK")
-                else:
-                    curr_exp_settings.append("PK")
-                curr_exp_settings.append("FedAvg")
-                if paoding_option == 1:
-                    curr_exp_settings.append('paoding')
-                    
-                if exp_idx < RESUME:
-                    print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ3 FedAvg) skipped.")                    
-                else:
-                    log_filename = generate_logfile_name(curr_exp_settings)
-                    for i in range(0, DEFAULT_REPEAT):
-                        print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ3 FedAvg) started.") 
-                        print("  currently in a repeation (" + str(i) + "/" + str(DEFAULT_REPEAT) + ")")
-                        main(config, pruning_settings, log_filename)
-                        '''
-                        try:
-                            main(config, pruning_settings, log_filename)
-                        except Exception as err:
-                            print("An exception occurred in experiment no." + str(exp_idx) + ": " + str(err))
-                            exc_type, exc_obj, exc_tb = sys.exc_info()
-                            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                            print(exc_type, fname, exc_tb.tb_lineno) 
-                        '''
-                exp_idx += 1
-            
+        for reject in reject_options[1:]:
             for tm_beta in tm_beta_list:
                 config.server.aggregator['name'] = 'TrimmedMean'
                 config.server.aggregator['args']['beta']=tm_beta
                 for paoding_option in [0,1]:
                     config.environment.paoding = paoding_option
+
                     curr_exp_settings = []
                     curr_exp_settings.append(str(exp_idx))
                     curr_exp_settings.append(config.dataset.dataset)
-                    curr_exp_settings.append('RQ3b')
-                    if attacker_full_dataset:
-                        curr_exp_settings.append("FK")
-                    else:
-                        curr_exp_settings.append("PK")
+                    curr_exp_settings.append('RQ2b')
                     if tm_beta > 0.25:
                         curr_exp_settings.append("TrimMean-Radi")
                     else:
                         curr_exp_settings.append("TrimMean-Cons")
+                    
+                    curr_exp_settings.append(reject)    
                     if paoding_option == 1:
                         curr_exp_settings.append('paoding')
-                    
+
                     if exp_idx < RESUME:
-                        print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ3 TM) skipped.")                    
+                        print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ2 TM) skipped.")                    
                     else:
                         log_filename = generate_logfile_name(curr_exp_settings)
                         for i in range(0, DEFAULT_REPEAT):
-                            print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ3 TM) started.") 
+                            print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ2 TM) started.") 
                             print("  currently in a repeation (" + str(i) + "/" + str(DEFAULT_REPEAT) + ")")
                             main(config, pruning_settings, log_filename)
                             '''
@@ -397,9 +279,10 @@ if __name__ == '__main__':
                                 print(exc_type, fname, exc_tb.tb_lineno)
                             '''
                     exp_idx += 1
-            
-            config.server.aggregator['args'].pop('beta', None)
+ 
+        for reject in reject_options[1:]:
             config.server.aggregator['name'] = 'Krum'
+            config.server.aggregator['args'].pop('beta', None)
             for byz in byz_list:
                 config.server.aggregator['args']['byz']=byz
                 for paoding_option in [0,1]:
@@ -407,24 +290,72 @@ if __name__ == '__main__':
                     curr_exp_settings = []
                     curr_exp_settings.append(str(exp_idx))
                     curr_exp_settings.append(config.dataset.dataset)
+                    curr_exp_settings.append('RQ2b')
+                    if byz > 0.25:
+                        curr_exp_settings.append("Krum-Radi")
+                    else:
+                        curr_exp_settings.append("Krum-Cons")
+                    
+                    curr_exp_settings.append(reject)
+                    if paoding_option == 1:
+                        curr_exp_settings.append('paoding')
+
+                    if exp_idx < RESUME:
+                        print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ2 Krum) skipped.")                    
+                    else:
+                        log_filename = generate_logfile_name(curr_exp_settings)
+                        for i in range(0, DEFAULT_REPEAT):
+                            print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ2 Krum) started.") 
+                            print("  currently in a repeation (" + str(i) + "/" + str(DEFAULT_REPEAT) + ")")
+                            #try:
+                            main(config, pruning_settings, log_filename)
+                            '''
+                            except Exception as err:
+                                print("An exception occurred in experiment no." + str(exp_idx) + ": " + str(err))
+                                exc_type, exc_obj, exc_tb = sys.exc_info()
+                                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                                print(exc_type, fname, exc_tb.tb_lineno)
+                            '''
+                    exp_idx += 1
+        config.server.aggregator['args'].pop('byz', None)
+
+    if RQ3:
+        reject_options = ['None', 'ERR', 'LFR', 'UNION']
+        config.environment.num_malicious_clients = DEFAULT_NUM_MALICIOUS_CLIENTS 
+        config.environment.attack_frequency = DEFAULT_ATT_FREQ
+        # Reset task number
+        config.client.malicious.backdoor['tasks'] = config.environment.num_malicious_clients
+        
+        config.environment.attacker_full_knowledge = True
+        
+        for reject in reject_options[1:]:
+            for attacker_full_dataset in [False,True]:
+                config.environment.attacker_full_dataset = attacker_full_dataset
+                
+                config.server.aggregator['args'].pop('byz', None)
+                config.server.aggregator['args'].pop('beta', None)
+                for paoding_option in [0,1]:
+                    config.server.aggregator['name'] = 'FedAvg'
+                    config.environment.paoding = paoding_option
+
+                    curr_exp_settings = []
+                    curr_exp_settings.append(str(exp_idx))
+                    curr_exp_settings.append(config.dataset.dataset)
                     curr_exp_settings.append('RQ3b')
                     if attacker_full_dataset:
                         curr_exp_settings.append("FK")
                     else:
                         curr_exp_settings.append("PK")
-                    if byz > 0.25:
-                        curr_exp_settings.append("Krum")
-                    else:
-                        curr_exp_settings.append("Krum-Cons")
+                    curr_exp_settings.append("FedAvg")
                     if paoding_option == 1:
                         curr_exp_settings.append('paoding')
-                    
+                        
                     if exp_idx < RESUME:
-                        print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ3 Krum) skipped.")                    
+                        print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ3 FedAvg) skipped.")                    
                     else:
                         log_filename = generate_logfile_name(curr_exp_settings)
                         for i in range(0, DEFAULT_REPEAT):
-                            print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ3 Krum) started.") 
+                            print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ3 FedAvg) started.") 
                             print("  currently in a repeation (" + str(i) + "/" + str(DEFAULT_REPEAT) + ")")
                             main(config, pruning_settings, log_filename)
                             '''
@@ -434,8 +365,91 @@ if __name__ == '__main__':
                                 print("An exception occurred in experiment no." + str(exp_idx) + ": " + str(err))
                                 exc_type, exc_obj, exc_tb = sys.exc_info()
                                 fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                                print(exc_type, fname, exc_tb.tb_lineno)
+                                print(exc_type, fname, exc_tb.tb_lineno) 
                             '''
                     exp_idx += 1
-        config.server.aggregator['args'].pop('byz', None)
                 
+                for tm_beta in tm_beta_list:
+                    config.server.aggregator['name'] = 'TrimmedMean'
+                    config.server.aggregator['args']['beta']=tm_beta
+                    for paoding_option in [0,1]:
+                        config.environment.paoding = paoding_option
+                        curr_exp_settings = []
+                        curr_exp_settings.append(str(exp_idx))
+                        curr_exp_settings.append(config.dataset.dataset)
+                        curr_exp_settings.append('RQ3b')
+                        if attacker_full_dataset:
+                            curr_exp_settings.append("FK")
+                        else:
+                            curr_exp_settings.append("PK")
+                        if tm_beta > 0.25:
+                            curr_exp_settings.append("TrimMean-Radi")
+                        else:
+                            curr_exp_settings.append("TrimMean-Cons")
+                        
+                        curr_exp_settings.append(reject)
+                        if paoding_option == 1:
+                            curr_exp_settings.append('paoding')
+                        
+                        if exp_idx < RESUME:
+                            print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ3 TM) skipped.")                    
+                        else:
+                            log_filename = generate_logfile_name(curr_exp_settings)
+                            for i in range(0, DEFAULT_REPEAT):
+                                print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ3 TM) started.") 
+                                print("  currently in a repeation (" + str(i) + "/" + str(DEFAULT_REPEAT) + ")")
+                                main(config, pruning_settings, log_filename)
+                                '''
+                                try:
+                                    main(config, pruning_settings, log_filename)
+                                except Exception as err:
+                                    print("An exception occurred in experiment no." + str(exp_idx) + ": " + str(err))
+                                    exc_type, exc_obj, exc_tb = sys.exc_info()
+                                    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                                    print(exc_type, fname, exc_tb.tb_lineno)
+                                '''
+                        exp_idx += 1
+                
+                config.server.aggregator['args'].pop('beta', None)
+                config.server.aggregator['name'] = 'Krum'
+                for byz in byz_list:
+                    config.server.aggregator['args']['byz']=byz
+                    for paoding_option in [0,1]:
+                        config.environment.paoding = paoding_option
+                        curr_exp_settings = []
+                        curr_exp_settings.append(str(exp_idx))
+                        curr_exp_settings.append(config.dataset.dataset)
+                        curr_exp_settings.append('RQ3b')
+                        if attacker_full_dataset:
+                            curr_exp_settings.append("FK")
+                        else:
+                            curr_exp_settings.append("PK")
+                        if byz > 0.25:
+                            curr_exp_settings.append("Krum")
+                        else:
+                            curr_exp_settings.append("Krum-Cons")
+                        
+                        curr_exp_settings.append(reject)
+                        if paoding_option == 1:
+                            curr_exp_settings.append('paoding')
+                        
+                        if exp_idx < RESUME:
+                            print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ3 Krum) skipped.")                    
+                        else:
+                            log_filename = generate_logfile_name(curr_exp_settings)
+                            for i in range(0, DEFAULT_REPEAT):
+                                print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ3 Krum) started.") 
+                                print("  currently in a repeation (" + str(i) + "/" + str(DEFAULT_REPEAT) + ")")
+                                main(config, pruning_settings, log_filename)
+                                '''
+                                try:
+                                    main(config, pruning_settings, log_filename)
+                                except Exception as err:
+                                    print("An exception occurred in experiment no." + str(exp_idx) + ": " + str(err))
+                                    exc_type, exc_obj, exc_tb = sys.exc_info()
+                                    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                                    print(exc_type, fname, exc_tb.tb_lineno)
+                                '''
+                        exp_idx += 1
+            config.server.aggregator['args'].pop('byz', None)
+                    
