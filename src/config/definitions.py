@@ -113,6 +113,12 @@ class Environment(DataClassYAMLMixin):
     pretrain: int = 0 
     """Pretrain the first 20 rounds with all benign clients"""
 
+    reject: str = MISSING
+    """Reject-based defense proposed in Fang et al. 
+    ERR means error based rejection. LFR means loss function based rejection.
+    UNION means ERR+LFR rejection.
+    Otherwise, there is no reject-based defence."""
+
 @dataclass
 class Dataset(DataClassYAMLMixin):
     """Defines the dataset to use."""
