@@ -218,8 +218,8 @@ def resnet_v1(input_shape, depth, num_classes=10):
     x = tf.keras.layers.Dense(512, activation="relu")(x)
     x = tf.keras.layers.Dense(256, activation="relu")(x)
     outputs = Dense(num_classes,
-                    activation='softmax',
-                    kernel_initializer='he_normal')(x)
+                    activation='softmax')(x)
+                    #kernel_initializer='he_normal')(x)
 
     # Instantiate model.
     model = Model(inputs=inputs, outputs=outputs)
