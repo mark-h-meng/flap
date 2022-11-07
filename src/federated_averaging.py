@@ -62,6 +62,7 @@ class FederatedAveraging:
         self.model = models[0] # use first for me
         self.client_models = models
         self.global_weights = self.model.get_weights()
+        self.temp_global_weights = self.global_weights
 
         if config.environment.use_config_dir:
             self.experiment_dir = os.path.dirname(config_path)
@@ -441,6 +442,44 @@ class FederatedAveraging:
                         # Ignore malicious updates
                         temp_weights = [client.weights for client in selected_clients_list if not client.malicious]
                         weights = self.aggregator.aggregate(self.global_weights, temp_weights)
+
+                    ### [MARK] Implementation of Fang et al. reject-based defence
+                    elif self.config.environment.reject in ['ERR', 'LFR', 'UNION']:
+                        self.temp_global_weights = self.global_weights
+
+                        reject_option = self.config.environment.reject
+                        print(" >> Fang et al. reject-based option enabled! mode =", reject_option)
+
+                        fang_acc_list = []
+                        fang_loss_list = []
+                        for client_index, client in enumerate(selected_clients_list):
+                            temp_weights = [client.weights for client in selected_clients_list]
+                            del temp_weights[client_index]
+                            self.global_weights = self.aggregator.aggregate(self.temp_global_weights, temp_weights)
+                            test_accuracy, adv_success, test_loss = self.evaluate()
+                            fang_acc_list.append(test_accuracy)
+                            fang_loss_list.append(test_loss)
+                        
+                        reject_index_for_min_acc = fang_acc_list.index(min(fang_acc_list))
+                        reject_index_for_max_loss = fang_loss_list.index(max(fang_loss_list))
+
+                        self.global_weights = self.temp_global_weights
+
+                        if reject_index_for_max_loss == reject_index_for_min_acc:
+                            temp_weights = [client.weights for client in selected_clients_list]
+                            del temp_weights[reject_index_for_min_acc]
+                            weights = self.aggregator.aggregate(self.global_weights, temp_weights)
+                            print(" >> Reject client #" + str(reject_index_for_max_loss))
+                        else:
+                            temp_weights = [client.weights for client in selected_clients_list]
+                            if reject_option == 'ERR' or reject_option == 'UNION':
+                                del temp_weights[reject_index_for_min_acc]
+                                print(" >> Reject client #" + str(reject_index_for_min_acc))
+                            if reject_option == 'LFR' or reject_option == 'UNION':
+                                del temp_weights[reject_index_for_max_loss]
+                                print(" >> Reject client #" + str(reject_index_for_max_loss))
+                            weights = self.aggregator.aggregate(self.global_weights, temp_weights)
+
                     else:
                         # weights = selected_clients_list[0].weights  # just take one, malicious
 
@@ -451,6 +490,7 @@ class FederatedAveraging:
 
                         weights = self.aggregator.aggregate(self.global_weights, temp_weights)
 
+                    
                     ### [MARK] DO PRUNING (ON EACH ACTIVE CLIENT) HERE IF WE WANT IT TO BE DONE PRIOR TO THE AGGREGATION
                     
                     if pruning >= 1 and self.config.environment.paoding ==1 and round > 0 and round % int(1 / self.prune_frequency) == 0:
