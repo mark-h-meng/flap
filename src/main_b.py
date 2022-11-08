@@ -116,10 +116,10 @@ if __name__ == '__main__':
 
     # Now we perform a series of experiments by adjusting certain settings
     exp_idx = 1
-    RESUME = 2
+    RESUME = 1
     DEFAULT_REPEAT = 1
     
-    RQ1 = 1
+    RQ1 = 0
     RQ2 = 1
     RQ3 = 1
 
@@ -245,6 +245,7 @@ if __name__ == '__main__':
             for tm_beta in tm_beta_list:
                 config.server.aggregator['name'] = 'TrimmedMean'
                 config.server.aggregator['args']['beta']=tm_beta
+                config.environment.reject = reject
                 for paoding_option in [0,1]:
                     config.environment.paoding = paoding_option
 
@@ -257,7 +258,8 @@ if __name__ == '__main__':
                     else:
                         curr_exp_settings.append("TrimMean-Cons")
                     
-                    curr_exp_settings.append(reject)    
+                    if reject != 'None':
+                        curr_exp_settings.append(reject)    
                     if paoding_option == 1:
                         curr_exp_settings.append('paoding')
 
@@ -283,6 +285,7 @@ if __name__ == '__main__':
         for reject in reject_options[1:]:
             config.server.aggregator['name'] = 'Krum'
             config.server.aggregator['args'].pop('beta', None)
+            config.environment.reject = reject
             for byz in byz_list:
                 config.server.aggregator['args']['byz']=byz
                 for paoding_option in [0,1]:
@@ -296,7 +299,8 @@ if __name__ == '__main__':
                     else:
                         curr_exp_settings.append("Krum-Cons")
                     
-                    curr_exp_settings.append(reject)
+                    if reject != 'None':
+                        curr_exp_settings.append(reject)
                     if paoding_option == 1:
                         curr_exp_settings.append('paoding')
 
@@ -334,6 +338,7 @@ if __name__ == '__main__':
                 
                 config.server.aggregator['args'].pop('byz', None)
                 config.server.aggregator['args'].pop('beta', None)
+                config.environment.reject = reject
                 for paoding_option in [0,1]:
                     config.server.aggregator['name'] = 'FedAvg'
                     config.environment.paoding = paoding_option
@@ -347,7 +352,9 @@ if __name__ == '__main__':
                     else:
                         curr_exp_settings.append("PK")
                     curr_exp_settings.append("FedAvg")
-                    curr_exp_settings.append(reject)
+                    
+                    if reject != 'None':
+                        curr_exp_settings.append(reject)
                     if paoding_option == 1:
                         curr_exp_settings.append('paoding')
                         
@@ -373,6 +380,7 @@ if __name__ == '__main__':
                 for tm_beta in tm_beta_list:
                     config.server.aggregator['name'] = 'TrimmedMean'
                     config.server.aggregator['args']['beta']=tm_beta
+                    config.environment.reject = reject
                     for paoding_option in [0,1]:
                         config.environment.paoding = paoding_option
                         curr_exp_settings = []
@@ -387,8 +395,8 @@ if __name__ == '__main__':
                             curr_exp_settings.append("TrimMean-Radi")
                         else:
                             curr_exp_settings.append("TrimMean-Cons")
-                        
-                        curr_exp_settings.append(reject)
+                        if reject != 'None':
+                            curr_exp_settings.append(reject)
                         if paoding_option == 1:
                             curr_exp_settings.append('paoding')
                         
@@ -413,6 +421,7 @@ if __name__ == '__main__':
                 
                 config.server.aggregator['args'].pop('beta', None)
                 config.server.aggregator['name'] = 'Krum'
+                config.environment.reject = reject
                 for byz in byz_list:
                     config.server.aggregator['args']['byz']=byz
                     for paoding_option in [0,1]:
@@ -430,7 +439,8 @@ if __name__ == '__main__':
                         else:
                             curr_exp_settings.append("Krum-Cons")
                         
-                        curr_exp_settings.append(reject)
+                        if reject != 'None':
+                            curr_exp_settings.append(reject)
                         if paoding_option == 1:
                             curr_exp_settings.append('paoding')
                         
