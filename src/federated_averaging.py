@@ -330,8 +330,8 @@ class FederatedAveraging:
                 #            '\tadv_success=', "{:.4}".format(adv_success),
                 #            '\ttest_loss=', "{:.6}".format(test_loss),'\n']
                 
-                output_list = ['round', '\ttest_accuracy', '\tadv_success',
-                            '\ttest_loss', 'duration', 'note',]
+                output_list = ['round', 'test_accuracy', 'adv_success',
+                            'test_loss', 'duration', 'note',]
                 logger.write(','.join(map(str, output_list)))
 
                 output_list = [0, "{:.8}".format(test_accuracy/1.0), "{:.4}".format(adv_success/1.0),\
@@ -345,11 +345,18 @@ class FederatedAveraging:
                 if self.config.environment.pretrain == 1:
                     idx_first_round = self.config.environment.save_model_at[-1] + 1
                     print(" > Starting from round #" + str(idx_first_round) + ".")
+                
+                # Create a list of accuracy and adv_succ to calculate the mean value
+                accuracy_observed = []
+                adv_success_observed = []
                 for round in range(idx_first_round, self.num_rounds + 1):
                     has_been_pruned = 0
                     has_attack = 0
                     process = psutil.Process(os.getpid())
                     logging.debug("Memory info: " + str(process.memory_info().rss))  # in bytes
+
+                    
+
                     start_time = time.time()
 
                     if self.attack_frequency is None:
@@ -612,7 +619,11 @@ class FederatedAveraging:
                         rounds.append(round)
                         print('round=', round, '\ttest_accuracy=', test_accuracy, '\tadv_success=', adv_success,
                             '\ttest_loss=', test_loss, '\tduration=', duration, flush=True)
-                         
+                        
+                        if round > 0:
+                            accuracy_observed.append(test_accuracy)
+                            adv_success_observed.append(adv_success)
+
                         # output_list = ['round=', round, '\ttest_accuracy=', "{:.8}".format(test_accuracy), 
                         #    '\tadv_success=', "{:.4}".format(adv_success),
                         #    '\ttest_loss=', "{:.6}".format(test_loss), 
@@ -632,7 +643,14 @@ class FederatedAveraging:
                         self.global_weights = weights
 
                     if round in self.config.environment.save_model_at:
-                        self.save_model(round)
+                        model_filename_to_save = self.model_name
+                        aggregator_name = self.config.server.aggregator['name']
+                        if aggregator_name == 'Krum' and self.config.server.aggregator['args']['byz'] < 0.5:
+                            aggregator_name = 'MultiKrum'
+                        model_filename_to_save += "_" + aggregator_name
+                        if self.config.environment.paoding:
+                            model_filename_to_save += "_paoding"
+                        self.save_model(model_filename_to_save, round)
 
                     for client in self.client_objs:
                         client.weights = None # Release
@@ -640,7 +658,15 @@ class FederatedAveraging:
                 log_data(self.experiment_dir, rounds, accuracies, adv_success_list)
                 self.log_hparams(rounds, accuracies, adv_success_list)
                 
+                from statistics import mean
+                mean_accuracy = mean(accuracy_observed)
+                mean_adv_succ = mean(adv_success_observed)
+                logger.write('\nmean-all,' + str(mean_accuracy) + "," + str(mean_adv_succ))
+                mean_accuracy_last = mean(accuracy_observed[-10:])
+                mean_adv_succ_last = mean(adv_success_observed[-10:])
+                logger.write('\nmean-last-ten,'+ str(mean_accuracy_last) + "," + str(mean_adv_succ_last))
                 logger.write('\n')
+
 
     def noise_with_layer(self, w):
         sigma = self.config.server.gaussian_noise
@@ -768,10 +794,10 @@ class FederatedAveraging:
         print(np.where(preds == as_7s))
         # print(f"Correct: {self.global_dataset.y_aux_test[pred_inds]} -> {preds[pred_inds]}")
 
-    def save_model(self, round):
+    def save_model(self, filename, round=0):
         #path = os.path.join(self.global_model_dir, f'model_{round}.h5')
-        path = os.path.join("save_fl_models", self.model_name)
-        print(f" > Saving model at {path}")
+        path = os.path.join("save_fl_models", filename)
+        print(f" >> Saving model at {path}")
         self.model.save(path)
 
     def write_hparams(self, hparams, metrics):

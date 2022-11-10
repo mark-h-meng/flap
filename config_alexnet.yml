@@ -1,21 +1,21 @@
 environment:
   seed: 42
-  num_clients: 50
-  num_selected_clients: 20
-  num_malicious_clients: 3
+  num_clients: 120
+  num_selected_clients: 80
+  num_malicious_clients: 16
   experiment_name: "alexnet"
   attacker_full_knowledge: False
   attacker_full_dataset: False
   attack_frequency: 1
   # attack freq 0.2 means attacking for every 1/0.2=5 rounds
-  prune_frequency: 0.5
+  prune_frequency: 0.2
   paoding: 1
   pruneconv: 1
   load_model: alexnet_cifar
-  save_model_at: [50]
+  save_model_at: [20]
 
 server:
-  num_rounds: 55
+  num_rounds: 30
   num_test_batches: 5
   aggregator:
     name: FedAvg
@@ -27,7 +27,7 @@ server:
 client:
   model_name: alexnet_cifar
   benign_training:
-    num_epochs: 1
+    num_epochs: 5
     batch_size: 32
     optimizer: SGD
     learning_rate: 0.001
@@ -35,11 +35,11 @@ client:
     objective:
       name: TargetedAttack
       args:
-        num_epochs: 1
-        num_batch: 32
+        num_epochs: 5
+        num_batch: 5
         poison_samples: 12
         optimizer: SGD
-        learning_rate: 0.001
+        learning_rate: 0.1
         reduce_lr: true
     evasion:
       name: NormBoundPGDEvasion
@@ -53,7 +53,7 @@ client:
       source_label: 7
       aux_samples: -1
       augment_times: 20
-
+    multi_attacker_scale_divide: trued
 dataset:
   dataset: cifar10
   data_distribution: nonIID

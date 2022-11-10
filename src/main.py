@@ -20,8 +20,11 @@ def get_timestamp_str():
 
 def load_model(temp_filename):
     if config.environment.load_model is not None:    
-        model_filename = config.environment.load_model + "_" + config.server.aggregator.name    
-        pretrained_model_path = os.path.join("save_fl_models", config.environment.load_model)
+        aggregator_name = config.server.aggregator['name']
+        if aggregator_name == 'Krum' and config.server.aggregator['args']['byz'] < 0.5:
+            aggregator_name = 'MultiKrum'
+        model_filename = config.environment.load_model + "_" + aggregator_name   
+        pretrained_model_path = os.path.join("save_fl_models", model_filename)
         if config.environment.paoding:
             pretrained_model_path += "_paoding"
         if os.path.exists(pretrained_model_path):
@@ -122,28 +125,116 @@ if __name__ == '__main__':
     # Now we perform a series of experiments by adjusting certain settings
     exp_idx = 1
     RESUME = 1
-    DEFAULT_REPEAT = 1
+    DEFAULT_REPEAT = 2
     MODE = 'B'
 
+    RQ0 = 1
     RQ1 = 0
-    RQ2 = 1
-    RQ3 = 1
+    RQ2 = 0
+    RQ3 = 0
 
     if MODE == 'A':
         config.environment.save_model_at = []
-        config.server.num_rounds = 30
+        #config.server.num_rounds = 30
         config.environment.load_model = None
-    else:
-        config.environment.save_model_at = [20]
-        config.server.num_rounds = 30
+    #else:
+        #config.environment.save_model_at = [20]
+        #config.server.num_rounds = 30
+
+    if RQ0:
+        config.environment.attacker_full_knowledge = False
+        config.environment.num_malicious_clients = 0 
+        config.environment.attack_frequency = 0.0001
+        for paoding_option in [0,1]:
+            config.environment.paoding = paoding_option
+
+            # Step 1: FedAvg pretraining
+            config.server.aggregator['name'] = 'FedAvg'
+            curr_exp_settings = []
+            curr_exp_settings.append(config.dataset.dataset)
+            curr_exp_settings.append('RQ0-Benign')
+                
+            if paoding_option == 1:
+                curr_exp_settings.append('paoding')
+                
+            log_filename = generate_logfile_name(curr_exp_settings)
+
+            print(experiment_name + "(RQ0 Pre-train, FedAvg) started.") 
+            try:
+                main(config, pruning_settings, log_filename)
+                        
+            except Exception as err:
+                print("An exception occurred in experiment no." + str(exp_idx) + ": " + str(err))
+                exc_type, exc_obj, exc_tb = sys.exc_info()
+                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                print(exc_type, fname, exc_tb.tb_lineno)
+
+            # Step 2: TrimmedMean pretraining
+            config.server.aggregator['name'] = 'TrimmedMean'
+            for tm_beta in tm_beta_list:
+                config.server.aggregator['args']['beta']=tm_beta
+
+                curr_exp_settings = []
+                curr_exp_settings.append(config.dataset.dataset)
+                curr_exp_settings.append('RQ0-Benign')
+                if tm_beta > 0.25:
+                    curr_exp_settings.append("TrimMean-Radi")
+                else:
+                    curr_exp_settings.append("TrimMean-Cons")
+                    
+                    
+                if paoding_option == 1:
+                    curr_exp_settings.append('paoding')
+
+                log_filename = generate_logfile_name(curr_exp_settings)
+                print(experiment_name + "(RQ0 Pre-train, TM) started.") 
+                try:
+                    main(config, pruning_settings, log_filename)
+                except Exception as err:
+                    print("An exception occurred in experiment no." + str(exp_idx) + ": " + str(err))
+                    exc_type, exc_obj, exc_tb = sys.exc_info()
+                    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                    print(exc_type, fname, exc_tb.tb_lineno)
+            
+            config.server.aggregator['args'].pop('beta', None)
+
+            # Step 3: Krum & Multi-Krum pretraining
+            config.server.aggregator['name'] = 'Krum'
+            for byz in byz_list:
+                config.server.aggregator['args']['byz']=byz
+                curr_exp_settings = []
+                curr_exp_settings.append(config.dataset.dataset)
+                curr_exp_settings.append('RQ0-Benign')
+                if byz < 0.5:
+                    curr_exp_settings.append("Multi-Krum")
+                else:
+                    curr_exp_settings.append("Krum")
+                if paoding_option == 1:
+                    curr_exp_settings.append('paoding')
+
+                log_filename = generate_logfile_name(curr_exp_settings)
+                print(experiment_name + "(RQ0 Pre-train, Krum & Multi-Krum) started.") 
+                
+                try:
+                    main(config, pruning_settings, log_filename)
+                except Exception as err:
+                    print("An exception occurred in experiment no." + str(exp_idx) + ": " + str(err))
+                    exc_type, exc_obj, exc_tb = sys.exc_info()
+                    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                    print(exc_type, fname, exc_tb.tb_lineno)
+                    
+            config.server.aggregator['args'].pop('byz', None)
 
     if RQ1:
         config.environment.attacker_full_knowledge = False
         config.environment.num_malicious_clients = DEFAULT_NUM_MALICIOUS_CLIENTS 
         config.environment.attack_frequency = DEFAULT_ATT_FREQ
 
-        list_of_attack_freq = [0.0001, 0.04, 0.2, 1]
-        list_of_malicious_clients_percentage = [0.05, 0.1, 0.2, 0.3]
+        config.server.aggregator['name'] = 'FedAvg'
+        #list_of_attack_freq = [0.0001, 0.04, 0.2, 1]
+        #list_of_malicious_clients_percentage = [0.0125, 0.1, 0.2, 0.3]
+        list_of_attack_freq = [1]
+        list_of_malicious_clients_percentage = [0.2]
         
         ## Exp 1. Adjust attack frequency (0.001 means no attack, 0.03 means only 1 attack)
         for attack_freq in list_of_attack_freq: 

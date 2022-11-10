@@ -133,7 +133,7 @@ class Client:
         step_decay = optimizer_config['step_decay'] if 'step_decay' in optimizer_config else None
 
         _, adv_success = self.eval_aux_test(tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False))
-        print(f"Adv success: {adv_success}")
+        # print(f"Adv success: {adv_success}")
         if 'reduce_lr' in optimizer_config and optimizer_config['reduce_lr']:
             if adv_success > 0.6:
                 lr = lr / 100
