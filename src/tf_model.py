@@ -181,11 +181,12 @@ class Model:
             model.summary()
         elif model_name == 'allcnn_intrinsic':
             model = build_cnn_model_cifar_allcnn(vsize=intrinsic_dimension, weight_decay=regularization_rate)
-        elif model_name == 'resnet18':
+        elif model_name == 'resnet18' or model_name == 'resnet20':
             model = resnet_v1(input_shape=(32, 32, 3), depth=20)
             model.summary()
         elif model_name == 'resnet32':
             model = resnet_v1(input_shape=(32, 32, 3), depth=32)
+            model.summary()
         elif model_name == 'resnet44':
             model = resnet_v1(input_shape=(32, 32, 3), depth=44)
         elif model_name == 'resnet56':
@@ -193,7 +194,7 @@ class Model:
             model.summary()
         elif model_name == 'resnet110':
             model = resnet_v1(input_shape=(32, 32, 3), depth=110)
-        elif model_name == 'resnet18_v2':
+        elif model_name == 'resnet18_v2' or model_name == 'resnet20_v2':
             model = resnet_v2(input_shape=(32, 32, 3), depth=20)
         elif model_name == 'resnet56_v2':
             model = resnet_v2(input_shape=(32, 32, 3), depth=56)
