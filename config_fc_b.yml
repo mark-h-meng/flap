@@ -39,14 +39,14 @@ client:
         num_batch: 5
         poison_samples: 12
         optimizer: Adam
-        learning_rate: 0.1
+        learning_rate: 0.01
         reduce_lr: true
     evasion:
       name: NormBoundPGDEvasion
       args:
         norm_type: l_inf
         scale_factor: 30
-    multi_attacker_scale_divide: true
+    # multi_attacker_scale_divide: true
     backdoor:
       type: tasks
       tasks: 6

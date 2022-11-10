@@ -52,7 +52,7 @@ def trash_model(temp_filename):
         print(" > Removing temp file:", temp_filename)
         os.remove(temp_filename)
     except:
-        print("Error while deleting file ", temp_filename)
+        print(" >> Error while deleting file ", temp_filename)
 
 def main(config, pruning_settings, log_filename):
     timestamp = get_timestamp_str()
@@ -110,7 +110,7 @@ if __name__ == '__main__':
     
     tm_beta_list = [0.2]
     # tm_beta_list = [0.1, 0.4]
-    byz_list = [1, 0.2]
+    byz_list = [0.2]
     # byz_list = [0.33, 0.1]
 
     # pruning_evaluation_type is only used to define the log file name
@@ -125,13 +125,13 @@ if __name__ == '__main__':
     # Now we perform a series of experiments by adjusting certain settings
     exp_idx = 1
     RESUME = 1
-    DEFAULT_REPEAT = 2
+    DEFAULT_REPEAT = 3
     MODE = 'B'
 
-    RQ0 = 1
-    RQ1 = 0
-    RQ2 = 0
-    RQ3 = 0
+    RQ0 = 0
+    RQ1 = 1
+    RQ2 = 1
+    RQ3 = 1
 
     if MODE == 'A':
         config.environment.save_model_at = []
@@ -149,6 +149,7 @@ if __name__ == '__main__':
             config.environment.paoding = paoding_option
 
             # Step 1: FedAvg pretraining
+            
             config.server.aggregator['name'] = 'FedAvg'
             curr_exp_settings = []
             curr_exp_settings.append(config.dataset.dataset)
@@ -197,7 +198,7 @@ if __name__ == '__main__':
                     print(exc_type, fname, exc_tb.tb_lineno)
             
             config.server.aggregator['args'].pop('beta', None)
-
+            
             # Step 3: Krum & Multi-Krum pretraining
             config.server.aggregator['name'] = 'Krum'
             for byz in byz_list:
@@ -231,7 +232,7 @@ if __name__ == '__main__':
         config.environment.attack_frequency = DEFAULT_ATT_FREQ
 
         config.server.aggregator['name'] = 'FedAvg'
-        #list_of_attack_freq = [0.0001, 0.04, 0.2, 1]
+        #list_of_attack_freq = [0.04, 0.2, 1]
         #list_of_malicious_clients_percentage = [0.0125, 0.1, 0.2, 0.3]
         list_of_attack_freq = [1]
         list_of_malicious_clients_percentage = [0.2]
@@ -296,7 +297,7 @@ if __name__ == '__main__':
                     log_filename = generate_logfile_name(curr_exp_settings)
                     for i in range(0, DEFAULT_REPEAT):
                         print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ1 # Clients) started.") 
-                        print("  currently in a repeation (" + str(i) + "/" + str(DEFAULT_REPEAT) + ")")
+                        print("  currently in a repeation (" + str(i+1) + "/" + str(DEFAULT_REPEAT) + ")")
                         
                         try:
                             main(config, pruning_settings, log_filename)
@@ -346,7 +347,7 @@ if __name__ == '__main__':
                         log_filename = generate_logfile_name(curr_exp_settings)
                         for i in range(0, DEFAULT_REPEAT):
                             print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ2 TM) started.") 
-                            print("  currently in a repeation (" + str(i) + "/" + str(DEFAULT_REPEAT) + ")")
+                            print("  currently in a repeation (" + str(i+1) + "/" + str(DEFAULT_REPEAT) + ")")
                             
                             try:
                                 main(config, pruning_settings, log_filename)
@@ -386,7 +387,7 @@ if __name__ == '__main__':
                         log_filename = generate_logfile_name(curr_exp_settings)
                         for i in range(0, DEFAULT_REPEAT):
                             print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ2 Krum) started.") 
-                            print("  currently in a repeation (" + str(i) + "/" + str(DEFAULT_REPEAT) + ")")
+                            print("  currently in a repeation (" + str(i+1) + "/" + str(DEFAULT_REPEAT) + ")")
                             try:
                                 main(config, pruning_settings, log_filename)
                             
@@ -440,7 +441,7 @@ if __name__ == '__main__':
                         log_filename = generate_logfile_name(curr_exp_settings)
                         for i in range(0, DEFAULT_REPEAT):
                             print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ3 FedAvg) started.") 
-                            print("  currently in a repeation (" + str(i) + "/" + str(DEFAULT_REPEAT) + ")")
+                            print("  currently in a repeation (" + str(i+1) + "/" + str(DEFAULT_REPEAT) + ")")
                             
                             try:
                                 main(config, pruning_settings, log_filename)
@@ -481,7 +482,7 @@ if __name__ == '__main__':
                             log_filename = generate_logfile_name(curr_exp_settings)
                             for i in range(0, DEFAULT_REPEAT):
                                 print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ3 TM) started.") 
-                                print("  currently in a repeation (" + str(i) + "/" + str(DEFAULT_REPEAT) + ")")
+                                print("  currently in a repeation (" + str(i+1) + "/" + str(DEFAULT_REPEAT) + ")")
                                 
                                 try:
                                     main(config, pruning_settings, log_filename)
@@ -525,7 +526,7 @@ if __name__ == '__main__':
                             log_filename = generate_logfile_name(curr_exp_settings)
                             for i in range(0, DEFAULT_REPEAT):
                                 print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ3 Krum) started.") 
-                                print("  currently in a repeation (" + str(i) + "/" + str(DEFAULT_REPEAT) + ")")
+                                print("  currently in a repeation (" + str(i+1) + "/" + str(DEFAULT_REPEAT) + ")")
                                 
                                 try:
                                     main(config, pruning_settings, log_filename)

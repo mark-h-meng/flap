@@ -125,7 +125,7 @@ class Krum(Aggregator):
         self.byz = byz
         self.lr = lr
 
-        assert 0 < self.byz < 2/3, "Byz must be between zero and 2/3!"
+        #assert 0 < self.byz < 2/3, "Byz must be between zero and 2/3!"
 
     def aggregate(self, global_weights, client_weight_list):
         logging.info("Krum is selected, byz = "+str(self.byz))
@@ -150,7 +150,7 @@ class Krum(Aggregator):
             for layer in range(len(client_weight_list[client])):
                 #print(str(layer) + " ", end="")
                 grad = client_weight_list[client][layer] - current_weights[layer]
-                grad /= float(num_selected)
+                grad /= float(num_workers)
                 client_grad.append(grad)
                 #print("size of client_grad[-1]:", np.shape(client_grad[-1]))
             #print("")
