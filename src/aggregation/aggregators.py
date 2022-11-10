@@ -134,6 +134,11 @@ class Krum(Aggregator):
         num_byzworkers = int(self.byz * num_workers)
         num_selected = max(num_workers - num_byzworkers - 2, 1)
         
+        if num_workers - num_byzworkers - 2 <= 1:
+            print(" >>> Krum is selected, only 1 local model is adopted in the current round of aggregation.")
+        else:
+            print(" >>> Multi-Krum is selected. " + str(num_workers - num_byzworkers - 2) + " clients update will be aggregated this round.")
+            
         current_weights = global_weights
         new_weights = deepcopy(current_weights)
 
