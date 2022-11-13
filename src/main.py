@@ -21,8 +21,8 @@ def get_timestamp_str():
 def load_model(temp_filename):
     if config.environment.load_model is not None:    
         aggregator_name = config.server.aggregator['name']
-        if aggregator_name == 'Krum' and config.server.aggregator['args']['byz'] < 0.5:
-            aggregator_name = 'MultiKrum'
+        #if aggregator_name == 'Krum' and config.server.aggregator['args']['byz'] < 0.5:
+        #    aggregator_name = 'MultiKrum'
         model_filename = config.environment.load_model + "_" + aggregator_name   
         pretrained_model_path = os.path.join("save_fl_models", model_filename)
         if config.environment.paoding:
@@ -98,8 +98,9 @@ if __name__ == '__main__':
     config.server.aggregator['name'] = 'FedAvg'
     config.server.aggregator['args'] = {}
     
-    DEFAULT_NUM_MALICIOUS_CLIENTS = int(config.environment.num_selected_clients * 0.15) # 15% OUT OF ALL CLIENTS （See Fang's paper, 15% is the worst case in their experiment)
+    DEFAULT_PERCENTAGE_OF_MALICIOUS_CLIENTS = 0.2 # 20% OUT OF ALL CLIENTS （See Fang's paper, 20% is the worst case in their experiment)
     DEFAULT_ATT_FREQ = 1
+    DEFAULT_NUM_MALICIOUS_CLIENTS = int(config.environment.num_selected_clients * DEFAULT_PERCENTAGE_OF_MALICIOUS_CLIENTS) 
 
     config.environment.attacker_full_knowledge = False
     #config.server.num_rounds = 105
@@ -108,9 +109,9 @@ if __name__ == '__main__':
     config.environment.prune_frequency = 0.25
     config.environment.paoding = 1
     
-    tm_beta_list = [0.2]
+    tm_beta_list = [0.1,0.2,0.3]
     # tm_beta_list = [0.1, 0.4]
-    byz_list = [0.2]
+    byz_list = [0.1,0.2,0.3]
     # byz_list = [0.33, 0.1]
 
     # pruning_evaluation_type is only used to define the log file name
@@ -125,7 +126,7 @@ if __name__ == '__main__':
     # Now we perform a series of experiments by adjusting certain settings
     exp_idx = 1
     RESUME = 1
-    DEFAULT_REPEAT = 3
+    DEFAULT_REPEAT = 2
     MODE = 'B'
 
     RQ0 = 0
@@ -138,6 +139,8 @@ if __name__ == '__main__':
         #config.server.num_rounds = 30
         config.environment.load_model = None
     #else:
+        #config.client.malicious.attack_stop = 30
+        #config.server.num_rounds = 35
         #config.environment.save_model_at = [20]
         #config.server.num_rounds = 30
 
@@ -145,7 +148,7 @@ if __name__ == '__main__':
         config.environment.attacker_full_knowledge = False
         config.environment.num_malicious_clients = 0 
         config.environment.attack_frequency = 0.0001
-        for paoding_option in [0,1]:
+        for paoding_option in [0]:
             config.environment.paoding = paoding_option
 
             # Step 1: FedAvg pretraining
@@ -170,6 +173,7 @@ if __name__ == '__main__':
                 fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                 print(exc_type, fname, exc_tb.tb_lineno)
 
+            '''   
             # Step 2: TrimmedMean pretraining
             config.server.aggregator['name'] = 'TrimmedMean'
             for tm_beta in tm_beta_list:
@@ -178,8 +182,11 @@ if __name__ == '__main__':
                 curr_exp_settings = []
                 curr_exp_settings.append(config.dataset.dataset)
                 curr_exp_settings.append('RQ0-Benign')
-                if tm_beta > 0.25:
+                
+                if tm_beta > DEFAULT_PERCENTAGE_OF_MALICIOUS_CLIENTS:
                     curr_exp_settings.append("TrimMean-Radi")
+                elif tm_beta == DEFAULT_PERCENTAGE_OF_MALICIOUS_CLIENTS:
+                    curr_exp_settings.append("TrimMean-Perfect")
                 else:
                     curr_exp_settings.append("TrimMean-Cons")
                     
@@ -208,6 +215,12 @@ if __name__ == '__main__':
                 curr_exp_settings.append('RQ0-Benign')
                 if byz < 0.5:
                     curr_exp_settings.append("Multi-Krum")
+                    if byz > DEFAULT_PERCENTAGE_OF_MALICIOUS_CLIENTS:
+                        curr_exp_settings.append("Radi")
+                    elif byz == DEFAULT_PERCENTAGE_OF_MALICIOUS_CLIENTS:
+                        curr_exp_settings.append("Perfect")
+                    else:
+                        curr_exp_settings.append("Cons")
                 else:
                     curr_exp_settings.append("Krum")
                 if paoding_option == 1:
@@ -225,6 +238,7 @@ if __name__ == '__main__':
                     print(exc_type, fname, exc_tb.tb_lineno)
                     
             config.server.aggregator['args'].pop('byz', None)
+            '''
 
     if RQ1:
         config.environment.attacker_full_knowledge = False
@@ -232,10 +246,10 @@ if __name__ == '__main__':
         config.environment.attack_frequency = DEFAULT_ATT_FREQ
 
         config.server.aggregator['name'] = 'FedAvg'
-        #list_of_attack_freq = [0.04, 0.2, 1]
-        #list_of_malicious_clients_percentage = [0.0125, 0.1, 0.2, 0.3]
-        list_of_attack_freq = [1]
-        list_of_malicious_clients_percentage = [0.2]
+        list_of_attack_freq = [0.04, 0.2, 1]
+        list_of_malicious_clients_percentage = [0.0125, 0.1, 0.2, 0.3]
+        #list_of_attack_freq = [1]
+        #list_of_malicious_clients_percentage = [0.2]
         
         ## Exp 1. Adjust attack frequency (0.001 means no attack, 0.03 means only 1 attack)
         for attack_freq in list_of_attack_freq: 
@@ -248,6 +262,8 @@ if __name__ == '__main__':
                 curr_exp_settings.append(config.dataset.dataset)
                 curr_exp_settings.append('RQ1b')
                 curr_exp_settings.append(str(attack_freq))
+                if config.client.malicious.multi_attacker_scale_divide:
+                    curr_exp_settings.append("Super")
                 if paoding_option == 1:
                     curr_exp_settings.append('paoding')
                 
@@ -257,8 +273,8 @@ if __name__ == '__main__':
                     log_filename = generate_logfile_name(curr_exp_settings)
                     for i in range(0, DEFAULT_REPEAT):
                         print(experiment_name + " Experiment no." + str(exp_idx) + " (RQ1 Freq) started.") 
-                        print("  currently in a repeation (" + str(i) + "/" + str(DEFAULT_REPEAT) + ")")
-                        
+                        print("  currently in a repeation (" + str(i+1) + "/" + str(DEFAULT_REPEAT) + ")")
+                        '''
                         main(config, pruning_settings, log_filename)
                         '''
                         try:
@@ -269,7 +285,7 @@ if __name__ == '__main__':
                             exc_type, exc_obj, exc_tb = sys.exc_info()
                             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                             print(exc_type, fname, exc_tb.tb_lineno)
-                        '''
+                        
                 exp_idx += 1
 
         ## Exp 2. Adjust malicious clients (excluding default mode (15%))
@@ -278,7 +294,7 @@ if __name__ == '__main__':
 
         for num_malicious_percentage in list_of_malicious_clients_percentage:        
             config.environment.num_malicious_clients = int(num_malicious_percentage * config.environment.num_selected_clients) 
-            config.client.malicious.backdoor['tasks'] = config.environment.num_malicious_clients
+            #config.client.malicious.backdoor['tasks'] = config.environment.num_malicious_clients
             #config.client.malicious.backdoor['tasks'] = int(num_malicious_percentage * config.environment.num_selected_clients) 
             for paoding_option in [0,1]:
                 config.environment.paoding = paoding_option
@@ -288,6 +304,8 @@ if __name__ == '__main__':
                 curr_exp_settings.append(config.dataset.dataset)
                 curr_exp_settings.append('RQ1b')
                 curr_exp_settings.append(str(config.environment.num_malicious_clients)+"-attcker")
+                if config.client.malicious.multi_attacker_scale_divide:
+                    curr_exp_settings.append("Super")
                 if paoding_option == 1:
                     curr_exp_settings.append('paoding')
                 
@@ -317,7 +335,7 @@ if __name__ == '__main__':
         config.environment.num_malicious_clients = DEFAULT_NUM_MALICIOUS_CLIENTS 
         config.environment.attack_frequency = DEFAULT_ATT_FREQ
         # Reset task number
-        config.client.malicious.backdoor['tasks'] = config.environment.num_malicious_clients
+        #config.client.malicious.backdoor['tasks'] = config.environment.num_malicious_clients
         
         for reject in reject_options:
             for tm_beta in tm_beta_list:
@@ -331,13 +349,17 @@ if __name__ == '__main__':
                     curr_exp_settings.append(str(exp_idx) + MODE)
                     curr_exp_settings.append(config.dataset.dataset)
                     curr_exp_settings.append('RQ2b')
-                    if tm_beta > 0.25:
+                    if tm_beta > DEFAULT_PERCENTAGE_OF_MALICIOUS_CLIENTS:
                         curr_exp_settings.append("TrimMean-Radi")
+                    elif tm_beta == DEFAULT_PERCENTAGE_OF_MALICIOUS_CLIENTS:
+                        curr_exp_settings.append("TrimMean-Perfect")
                     else:
                         curr_exp_settings.append("TrimMean-Cons")
                     
                     if reject != 'None':
-                        curr_exp_settings.append(reject)    
+                        curr_exp_settings.append(reject)
+                    if config.client.malicious.multi_attacker_scale_divide:
+                        curr_exp_settings.append("Super")    
                     if paoding_option == 1:
                         curr_exp_settings.append('paoding')
 
@@ -373,11 +395,19 @@ if __name__ == '__main__':
                     curr_exp_settings.append('RQ2b')
                     if byz < 0.5:
                         curr_exp_settings.append("Multi-Krum")
+                        if byz > DEFAULT_PERCENTAGE_OF_MALICIOUS_CLIENTS:
+                            curr_exp_settings.append("Radi")
+                        elif byz == DEFAULT_PERCENTAGE_OF_MALICIOUS_CLIENTS:
+                            curr_exp_settings.append("Perfect")
+                        else:
+                            curr_exp_settings.append("Cons")
                     else:
                         curr_exp_settings.append("Krum")
                     
                     if reject != 'None':
                         curr_exp_settings.append(reject)
+                    if config.client.malicious.multi_attacker_scale_divide:
+                        curr_exp_settings.append("Super")
                     if paoding_option == 1:
                         curr_exp_settings.append('paoding')
 
@@ -405,7 +435,7 @@ if __name__ == '__main__':
         config.environment.num_malicious_clients = DEFAULT_NUM_MALICIOUS_CLIENTS 
         config.environment.attack_frequency = DEFAULT_ATT_FREQ
         # Reset task number
-        config.client.malicious.backdoor['tasks'] = config.environment.num_malicious_clients
+        #config.client.malicious.backdoor['tasks'] = config.environment.num_malicious_clients
         
         config.environment.attacker_full_knowledge = True
         
@@ -432,6 +462,8 @@ if __name__ == '__main__':
                     
                     if reject != 'None':
                         curr_exp_settings.append(reject)
+                    if config.client.malicious.multi_attacker_scale_divide:
+                        curr_exp_settings.append("Super")
                     if paoding_option == 1:
                         curr_exp_settings.append('paoding')
                         
@@ -467,12 +499,18 @@ if __name__ == '__main__':
                             curr_exp_settings.append("FK")
                         else:
                             curr_exp_settings.append("PK")
-                        if tm_beta > 0.25:
+                        
+                        if tm_beta > DEFAULT_PERCENTAGE_OF_MALICIOUS_CLIENTS:
                             curr_exp_settings.append("TrimMean-Radi")
+                        elif tm_beta == DEFAULT_PERCENTAGE_OF_MALICIOUS_CLIENTS:
+                            curr_exp_settings.append("TrimMean-Perfect")
                         else:
                             curr_exp_settings.append("TrimMean-Cons")
+
                         if reject != 'None':
                             curr_exp_settings.append(reject)
+                        if config.client.malicious.multi_attacker_scale_divide:
+                            curr_exp_settings.append("Super")
                         if paoding_option == 1:
                             curr_exp_settings.append('paoding')
                         
@@ -512,11 +550,19 @@ if __name__ == '__main__':
                         
                         if byz < 0.5:
                             curr_exp_settings.append("Multi-Krum")
+                            if byz > DEFAULT_PERCENTAGE_OF_MALICIOUS_CLIENTS:
+                                curr_exp_settings.append("Radi")
+                            elif byz == DEFAULT_PERCENTAGE_OF_MALICIOUS_CLIENTS:
+                                curr_exp_settings.append("Perfect")
+                            else:
+                                curr_exp_settings.append("Cons")
                         else:
                             curr_exp_settings.append("Krum")
                         
                         if reject != 'None':
                             curr_exp_settings.append(reject)
+                        if config.client.malicious.multi_attacker_scale_divide:
+                            curr_exp_settings.append("Super")
                         if paoding_option == 1:
                             curr_exp_settings.append('paoding')
                         

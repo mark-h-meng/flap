@@ -432,7 +432,7 @@ class FederatedAveraging:
                                                     self.client_objs[i].weights, weights_list[i])
 
                     num_adversaries = np.count_nonzero([self.malicious_clients[i] for i in selected_clients])
-                    if num_adversaries > 0:
+                    if num_adversaries > 0 and round <= self.config.client.malicious.attack_stop:
                         has_attack = 1
                     # print(" >>> Number of adversaries", num_adversaries)
                     selected_clients_list = [self.client_objs[i] for i in selected_clients]
@@ -524,7 +524,8 @@ class FederatedAveraging:
                         from paoding.evaluator import Evaluator
                         from paoding.utility.option import ModelType, SamplingMode
                         sampler = Sampler()
-                        sampler.set_strategy(mode=SamplingMode.STOCHASTIC, params=pruning_params)  
+                        sampler.set_strategy(mode=SamplingMode.BASELINE, params=None)  
+                        #sampler.set_strategy(mode=SamplingMode.STOCHASTIC, params=pruning_params)  
                         #sampler.set_strategy(mode=SamplingMode.SCALE_ONLY, params=None)   
                         evaluator = None
 
@@ -645,8 +646,8 @@ class FederatedAveraging:
                     if round in self.config.environment.save_model_at:
                         model_filename_to_save = self.model_name
                         aggregator_name = self.config.server.aggregator['name']
-                        if aggregator_name == 'Krum' and self.config.server.aggregator['args']['byz'] < 0.5:
-                            aggregator_name = 'MultiKrum'
+                        #if aggregator_name == 'Krum' and self.config.server.aggregator['args']['byz'] < 0.5:
+                        #    aggregator_name = 'MultiKrum'
                         model_filename_to_save += "_" + aggregator_name
                         if self.config.environment.paoding:
                             model_filename_to_save += "_paoding"
@@ -659,13 +660,16 @@ class FederatedAveraging:
                 self.log_hparams(rounds, accuracies, adv_success_list)
                 
                 from statistics import mean
+                mean_accuracy_last = mean(accuracy_observed[:-5])
+                mean_adv_succ_last = mean(adv_success_observed[:-5])
+                logger.write('\nmean-last-10-adv,'+ str(mean_accuracy_last) + "," + str(mean_adv_succ_last))
+                mean_accuracy_last = mean(accuracy_observed[-5:])
+                mean_adv_succ_last = mean(adv_success_observed[-5:])
+                logger.write('\nmean-last-5-benign,'+ str(mean_accuracy_last) + "," + str(mean_adv_succ_last))
                 mean_accuracy = mean(accuracy_observed)
                 mean_adv_succ = mean(adv_success_observed)
                 logger.write('\nmean-all,' + str(mean_accuracy) + "," + str(mean_adv_succ))
-                mean_accuracy_last = mean(accuracy_observed[-10:])
-                mean_adv_succ_last = mean(adv_success_observed[-10:])
-                logger.write('\nmean-last-ten,'+ str(mean_accuracy_last) + "," + str(mean_adv_succ_last))
-                logger.write('\n')
+                logger.write('\n\n')
 
 
     def noise_with_layer(self, w):

@@ -213,7 +213,7 @@ def resnet_v1(input_shape, depth, num_classes=10):
 
     # Add classifier on top.
     # v1 does not use BN after last shortcut connection-ReLU
-    x = AveragePooling2D(pool_size=8)(x)
+    x = AveragePooling2D(pool_size=4)(x)
     x = Flatten()(x)
     x = tf.keras.layers.Dense(256, activation="relu")(x)
     x = tf.keras.layers.Dense(128, activation="relu")(x)

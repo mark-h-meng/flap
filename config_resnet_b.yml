@@ -12,10 +12,10 @@ environment:
   paoding: 1
   pruneconv: 0
   load_model: resnet18
-  save_model_at: [20]
+  save_model_at: [60]
 
 server:
-  num_rounds: 30
+  num_rounds: 75
   num_test_batches: 64
   aggregator:
     name: FedAvg
@@ -46,10 +46,11 @@ client:
       args:
         norm_type: l_inf
         scale_factor: 30
-    #multi_attacker_scale_divide: true
+    multi_attacker_scale_divide: true
+    attack_stop: 70
     backdoor:
       type: tasks
-      tasks: 3
+      tasks: 1
       target_label: 1
       source_label: 7
       aux_samples: -1

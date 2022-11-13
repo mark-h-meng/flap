@@ -183,7 +183,7 @@ def get_dataset(config, attack_ds_config, add_x_train=None, add_y_train=None):
                                              attack_ds_config.remove_from_benign_dataset,
                                              num_clients).build()
             ds = NonIIDGlobalDataset(x_train_dist, y_train_dist, x_test, y_test, num_clients=num_clients)
-
+    
     elif dataset == 'fmnist':
         if data_distribution == 'IID':
             (x_train, y_train), (x_test, y_test) = Dataset.get_fmnist_dataset(number_of_samples)

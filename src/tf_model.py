@@ -184,6 +184,9 @@ class Model:
         elif model_name == 'resnet18' or model_name == 'resnet20':
             model = resnet_v1(input_shape=(32, 32, 3), depth=20)
             model.summary()
+        elif model_name == 'resnet18_mnist' or model_name == 'resnet20_mnist':
+            model = resnet_v1(input_shape=(28, 28, 1), depth=20)
+            model.summary()
         elif model_name == 'resnet32':
             model = resnet_v1(input_shape=(32, 32, 3), depth=32)
             model.summary()
@@ -280,9 +283,9 @@ class Model:
     @staticmethod
     def model_supported(model_name, dataset_name):
         supported_types = {
-            "mnist": ["mnist_cnn", "dev", "bhagoji", "dev_fc_intrinsic", "dev_intrinsic", "mnistcnn_intrinsic", "bhagoji_intrinsic", "lenet5_mnist"],
-            "fmnist": ["mnist_cnn", "dev", "bhagoji", "dev_fc_intrinsic", "dev_intrinsic", "mnistcnn_intrinsic", "bhagoji_intrinsic", "lenet5_mnist"],
-            "femnist": ["mnist_cnn", "dev", "bhagoji", "dev_fc_intrinsic", "dev_intrinsic", "mnistcnn_intrinsic", "bhagoji_intrinsic", "lenet5_mnist"],
+            "mnist": ["mnist_cnn", "dev", "bhagoji", "dev_fc_intrinsic", "dev_intrinsic", "mnistcnn_intrinsic", "bhagoji_intrinsic", "lenet5_mnist", "resnet18_mnist"],
+            "fmnist": ["mnist_cnn", "dev", "bhagoji", "dev_fc_intrinsic", "dev_intrinsic", "mnistcnn_intrinsic", "bhagoji_intrinsic", "lenet5_mnist", "resnet18_mnist"],
+            "femnist": ["mnist_cnn", "dev", "bhagoji", "dev_fc_intrinsic", "dev_intrinsic", "mnistcnn_intrinsic", "bhagoji_intrinsic", "lenet5_mnist", "resnet18_mnist"],
             "cifar10": ["resnet18", "resnet32", "resnet44", "resnet50", "resnet56", "resnet110", "resnet18_v2", "resnet56_v2", "lenet5_cifar", "lenet5_intrinsic", "allcnn", "allcnn_intrinsic"]
         }
         return model_name in supported_types[dataset_name]

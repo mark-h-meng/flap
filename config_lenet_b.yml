@@ -12,10 +12,10 @@ environment:
   paoding: 1
   pruneconv: 1
   load_model: lenet5_mnist
-  save_model_at: [10]
+  save_model_at: [20]
 
 server:
-  num_rounds: 20
+  num_rounds: 35
   num_test_batches: 5
   aggregator:
     name: FedAvg
@@ -46,7 +46,8 @@ client:
       args:
         norm_type: l_inf
         scale_factor: 30
-    #multi_attacker_scale_divide: true
+    multi_attacker_scale_divide: true
+    attack_stop: 30
     backdoor:
       type: tasks
       tasks: 6
