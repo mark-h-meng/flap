@@ -462,7 +462,7 @@ class FederatedAveraging:
                         for client_index, client in enumerate(selected_clients_list):
                             temp_weights = [client.weights for client in selected_clients_list]
                             del temp_weights[client_index]
-                            self.global_weights = self.aggregator.aggregate(self.temp_global_weights, temp_weights)
+                            self.global_weights = self.aggregator.fedavg(self.temp_global_weights, temp_weights)
                             test_accuracy, adv_success, test_loss = self.evaluate()
                             fang_acc_list.append(test_accuracy)
                             fang_loss_list.append(test_loss)

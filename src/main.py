@@ -125,13 +125,13 @@ if __name__ == '__main__':
 
     # Now we perform a series of experiments by adjusting certain settings
     exp_idx = 1
-    RESUME = 1
+    RESUME = 41
     DEFAULT_REPEAT = 2
     MODE = 'B'
 
     RQ0 = 0
-    RQ1 = 1
-    RQ2 = 1
+    RQ1 = 0
+    RQ2 = 0
     RQ3 = 1
 
     if MODE == 'A':
@@ -246,10 +246,10 @@ if __name__ == '__main__':
         config.environment.attack_frequency = DEFAULT_ATT_FREQ
 
         config.server.aggregator['name'] = 'FedAvg'
-        list_of_attack_freq = [0.04, 0.2, 1]
-        list_of_malicious_clients_percentage = [0.0125, 0.1, 0.2, 0.3]
-        #list_of_attack_freq = [1]
-        #list_of_malicious_clients_percentage = [0.2]
+        #list_of_attack_freq = [0.04, 0.2, 1]
+        #list_of_malicious_clients_percentage = [0.0125, 0.1, 0.2, 0.3]
+        list_of_attack_freq = [0.0001]
+        list_of_malicious_clients_percentage = [0.2]
         
         ## Exp 1. Adjust attack frequency (0.001 means no attack, 0.03 means only 1 attack)
         for attack_freq in list_of_attack_freq: 
@@ -329,7 +329,8 @@ if __name__ == '__main__':
         
 
     if RQ2:
-        reject_options = ['None', 'ERR', 'LFR', 'UNION']
+        #reject_options = ['None','ERR', 'LFR', 'UNION']
+        reject_options = ['None', 'UNION']
 
         config.environment.attacker_full_knowledge = False
         config.environment.num_malicious_clients = DEFAULT_NUM_MALICIOUS_CLIENTS 
@@ -431,7 +432,8 @@ if __name__ == '__main__':
         config.server.aggregator['args'].pop('byz', None)
 
     if RQ3:
-        reject_options = ['None', 'ERR', 'LFR', 'UNION']
+        #reject_options = ['None', 'ERR', 'LFR', 'UNION']
+        reject_options = ['None', 'UNION']
         config.environment.num_malicious_clients = DEFAULT_NUM_MALICIOUS_CLIENTS 
         config.environment.attack_frequency = DEFAULT_ATT_FREQ
         # Reset task number

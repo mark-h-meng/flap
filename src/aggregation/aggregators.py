@@ -12,7 +12,9 @@ class Aggregator:
         :type client_weight_list: list[np.ndarray]
         """
         raise NotImplementedError("Subclass")
-
+    
+    def fedavg(self, global_weights, client_weight_list):
+        return self.aggregate(self, global_weights, client_weight_list)
 
 class FedAvg(Aggregator):
 
@@ -44,6 +46,8 @@ class FedAvg(Aggregator):
 
         return new_weights
 
+    def fedavg(self, global_weights, client_weight_list):
+        return self.aggregate(global_weights, client_weight_list)
 
 class TrimmedMean(Aggregator):
 
@@ -85,6 +89,30 @@ class TrimmedMean(Aggregator):
 
         return new_weights
 
+    def fedavg(self, global_weights, client_weight_list):
+        """Procedure for merging client weights together with `global_learning_rate`."""
+        # return deepcopy(client_weight_list[0]) # Take attacker's
+        current_weights = global_weights
+        new_weights = deepcopy(current_weights)
+        # return new_weights
+        update_coefficient = self.lr
+
+        for client in range(0, len(client_weight_list)):
+            for layer in range(len(client_weight_list[client])):
+                new_weights[layer] = new_weights[layer] + \
+                                     update_coefficient * (client_weight_list[client][layer] - current_weights[layer])
+
+                if np.isnan(new_weights[layer]).any(): # TODO: Remove
+                    print(f"Layer {layer} is NaN!")
+                    import sys
+                    np.set_printoptions(threshold=sys.maxsize)
+                    print(new_weights[layer])
+                    print("XX")
+                    print(client_weight_list[client][layer])
+                    print("XX")
+                    print(current_weights[layer])
+
+        return new_weights
 class Median(Aggregator):
 
     def __init__(self, lr):
@@ -114,7 +142,31 @@ class Median(Aggregator):
                                  len(client_weight_list) # Multiply by list of clients
 
         return new_weights
+    
+    def fedavg(self, global_weights, client_weight_list):
+        """Procedure for merging client weights together with `global_learning_rate`."""
+        # return deepcopy(client_weight_list[0]) # Take attacker's
+        current_weights = global_weights
+        new_weights = deepcopy(current_weights)
+        # return new_weights
+        update_coefficient = self.lr
 
+        for client in range(0, len(client_weight_list)):
+            for layer in range(len(client_weight_list[client])):
+                new_weights[layer] = new_weights[layer] + \
+                                     update_coefficient * (client_weight_list[client][layer] - current_weights[layer])
+
+                if np.isnan(new_weights[layer]).any(): # TODO: Remove
+                    print(f"Layer {layer} is NaN!")
+                    import sys
+                    np.set_printoptions(threshold=sys.maxsize)
+                    print(new_weights[layer])
+                    print("XX")
+                    print(client_weight_list[client][layer])
+                    print("XX")
+                    print(current_weights[layer])
+
+        return new_weights
 class Krum(Aggregator):
 
     def __init__(self, byz, lr):
@@ -197,6 +249,31 @@ class Krum(Aggregator):
             new_weights[layer] = new_weights[layer] + \
                                  self.lr * np.array(result[layer], dtype=float)* \
                                  len(client_weight_list) 
+        return new_weights
+
+    def fedavg(self, global_weights, client_weight_list):
+        """Procedure for merging client weights together with `global_learning_rate`."""
+        # return deepcopy(client_weight_list[0]) # Take attacker's
+        current_weights = global_weights
+        new_weights = deepcopy(current_weights)
+        # return new_weights
+        update_coefficient = self.lr
+
+        for client in range(0, len(client_weight_list)):
+            for layer in range(len(client_weight_list[client])):
+                new_weights[layer] = new_weights[layer] + \
+                                     update_coefficient * (client_weight_list[client][layer] - current_weights[layer])
+
+                if np.isnan(new_weights[layer]).any(): # TODO: Remove
+                    print(f"Layer {layer} is NaN!")
+                    import sys
+                    np.set_printoptions(threshold=sys.maxsize)
+                    print(new_weights[layer])
+                    print("XX")
+                    print(client_weight_list[client][layer])
+                    print("XX")
+                    print(current_weights[layer])
+
         return new_weights
 
 def build_aggregator(config):
