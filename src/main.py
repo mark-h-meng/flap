@@ -110,10 +110,8 @@ if __name__ == '__main__':
     config.environment.paoding = 1
     
     tm_beta_list = [0.1,0.2,0.3]
-    # tm_beta_list = [0.1, 0.4]
     byz_list = [0.1,0.2,0.3]
-    # byz_list = [0.33, 0.1]
-
+    
     # pruning_evaluation_type is only used to define the log file name
     pruning_evaluation_type = 'mnist'
     if config.dataset.dataset=='cifar10':
@@ -125,13 +123,13 @@ if __name__ == '__main__':
 
     # Now we perform a series of experiments by adjusting certain settings
     exp_idx = 1
-    RESUME = 41
-    DEFAULT_REPEAT = 2
+    RESUME = 1
+    DEFAULT_REPEAT = 4
     MODE = 'B'
 
-    RQ0 = 0
-    RQ1 = 0
-    RQ2 = 0
+    RQ0 = 1
+    RQ1 = 1
+    RQ2 = 1
     RQ3 = 1
 
     if MODE == 'A':
@@ -173,7 +171,7 @@ if __name__ == '__main__':
                 fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                 print(exc_type, fname, exc_tb.tb_lineno)
 
-            '''   
+  
             # Step 2: TrimmedMean pretraining
             config.server.aggregator['name'] = 'TrimmedMean'
             for tm_beta in tm_beta_list:
@@ -238,7 +236,6 @@ if __name__ == '__main__':
                     print(exc_type, fname, exc_tb.tb_lineno)
                     
             config.server.aggregator['args'].pop('byz', None)
-            '''
 
     if RQ1:
         config.environment.attacker_full_knowledge = False
@@ -329,9 +326,8 @@ if __name__ == '__main__':
         
 
     if RQ2:
-        #reject_options = ['None','ERR', 'LFR', 'UNION']
-        reject_options = ['None', 'UNION']
-
+        reject_options = ['None','ERR', 'LFR', 'UNION']
+        
         config.environment.attacker_full_knowledge = False
         config.environment.num_malicious_clients = DEFAULT_NUM_MALICIOUS_CLIENTS 
         config.environment.attack_frequency = DEFAULT_ATT_FREQ
@@ -381,7 +377,7 @@ if __name__ == '__main__':
                                 print(exc_type, fname, exc_tb.tb_lineno)
                             
                     exp_idx += 1
- 
+
         for reject in reject_options:
             config.server.aggregator['name'] = 'Krum'
             config.server.aggregator['args'].pop('beta', None)
@@ -432,8 +428,8 @@ if __name__ == '__main__':
         config.server.aggregator['args'].pop('byz', None)
 
     if RQ3:
-        #reject_options = ['None', 'ERR', 'LFR', 'UNION']
-        reject_options = ['None', 'UNION']
+        reject_options = ['None', 'ERR', 'LFR', 'UNION']
+
         config.environment.num_malicious_clients = DEFAULT_NUM_MALICIOUS_CLIENTS 
         config.environment.attack_frequency = DEFAULT_ATT_FREQ
         # Reset task number
@@ -442,12 +438,13 @@ if __name__ == '__main__':
         config.environment.attacker_full_knowledge = True
         
         for reject in reject_options:
-            for attacker_full_dataset in [False,True]:
+            for attacker_full_dataset in [False]:
                 config.environment.attacker_full_dataset = attacker_full_dataset
                 
                 config.server.aggregator['args'].pop('byz', None)
                 config.server.aggregator['args'].pop('beta', None)
                 config.environment.reject = reject
+                '''
                 for paoding_option in [0,1]:
                     config.server.aggregator['name'] = 'FedAvg'
                     config.environment.paoding = paoding_option
@@ -486,7 +483,7 @@ if __name__ == '__main__':
                                 print(exc_type, fname, exc_tb.tb_lineno) 
                             
                     exp_idx += 1
-                
+                '''
                 for tm_beta in tm_beta_list:
                     config.server.aggregator['name'] = 'TrimmedMean'
                     config.server.aggregator['args']['beta']=tm_beta

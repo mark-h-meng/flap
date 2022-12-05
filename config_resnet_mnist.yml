@@ -15,7 +15,7 @@ environment:
   save_model_at: [20]
 
 server:
-  num_rounds: 35
+  num_rounds: 30
   num_test_batches: 64
   aggregator:
     name: FedAvg

@@ -469,7 +469,8 @@ class FederatedAveraging:
                         
                         reject_index_for_min_acc = fang_acc_list.index(min(fang_acc_list))
                         reject_index_for_max_loss = fang_loss_list.index(max(fang_loss_list))
-
+                        print( " >>> LOSS list " + str(fang_loss_list))
+                        print( " >>> ACC list " + str(fang_acc_list))
                         self.global_weights = self.temp_global_weights
 
                         if reject_index_for_max_loss == reject_index_for_min_acc:
@@ -660,12 +661,6 @@ class FederatedAveraging:
                 self.log_hparams(rounds, accuracies, adv_success_list)
                 
                 from statistics import mean
-                mean_accuracy_last = mean(accuracy_observed[:-5])
-                mean_adv_succ_last = mean(adv_success_observed[:-5])
-                logger.write('\nmean-last-10-adv,'+ str(mean_accuracy_last) + "," + str(mean_adv_succ_last))
-                mean_accuracy_last = mean(accuracy_observed[-5:])
-                mean_adv_succ_last = mean(adv_success_observed[-5:])
-                logger.write('\nmean-last-5-benign,'+ str(mean_accuracy_last) + "," + str(mean_adv_succ_last))
                 mean_accuracy = mean(accuracy_observed)
                 mean_adv_succ = mean(adv_success_observed)
                 logger.write('\nmean-all,' + str(mean_accuracy) + "," + str(mean_adv_succ))
