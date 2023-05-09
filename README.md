@@ -1,3 +1,7 @@
+# FLAP: Federated learning by data-agnostic pruning
+
+### THIS REPO IS IMPLEMENTED BASED ON A PUBLIC PROJECT https://github.com/pps-lab/fl-analysis
+
 ## Set up the execution
 
 Step 1: Configure your Python (3.7) + tensorflow 2.5.0 environment
