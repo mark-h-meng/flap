@@ -2,6 +2,8 @@
 
 ### THIS REPO IS IMPLEMENTED BASED ON A PUBLIC PROJECT https://github.com/pps-lab/fl-analysis
 
+*The configuration below is copied from the fl-analysis project, please also credit the original repo. for any reproducing scientific work.*
+
 ## Set up the execution
 
 Step 1: Configure your Python (3.7) + tensorflow 2.5.0 environment
@@ -70,7 +72,3 @@ tensorboard --logdir ./experiments/{experiment_name}
 
 This project's code is distributed under the MIT License. See `LICENSE` for more information.
 
-
-## Project Links: 
-* [https://github.com/pps-lab/fl-analysis](https://github.com/pps-lab/fl-analysis)
-* [https://pps-lab.com/research/ml-sec/](https://pps-lab.com/research/ml-sec/)
